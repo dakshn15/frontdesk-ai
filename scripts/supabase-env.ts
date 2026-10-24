@@ -31,7 +31,7 @@ export function mapSupabaseStatus(vars: Vars): Record<string, string> {
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: publishableKey,
     SUPABASE_SECRET_KEY: secretKey,
     MAILPIT_URL: vars.MAILPIT_URL ?? vars.INBUCKET_URL ?? DEFAULT_MAIL_URL,
-    NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+    NEXT_PUBLIC_SITE_URL: "http://localhost:3300",
     NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: "false",
   };
 }

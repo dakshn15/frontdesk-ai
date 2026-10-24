@@ -30,7 +30,7 @@ describe("mapSupabaseStatus", () => {
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "pk",
       SUPABASE_SECRET_KEY: "sk",
       MAILPIT_URL: "http://m",
-      NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3300",
       NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: "false",
     });
   });
