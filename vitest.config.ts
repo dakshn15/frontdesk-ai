@@ -21,6 +21,18 @@ export default defineConfig({
           environment: "node",
         },
       },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["tests/integration/**/*.test.ts"],
+          environment: "node",
+          globalSetup: ["tests/integration/global-setup.ts"],
+          setupFiles: ["tests/integration/setup.ts"],
+          env: { DB_POOL_MAX: "1" },
+          testTimeout: 20000,
+        },
+      },
     ],
   },
 });
