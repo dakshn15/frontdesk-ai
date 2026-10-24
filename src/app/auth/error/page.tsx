@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Logo } from "@/components/brand/logo";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Sign-in problem" };
@@ -18,22 +18,13 @@ export default async function AuthErrorPage({
     (typeof reason === "string" && messages[reason]) ||
     "Something went wrong signing you in.";
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center px-4 py-10 sm:py-16">
-      <Link href="/" className="mb-8 rounded-lg">
-        <Logo />
+    <AuthShell title="We couldn't sign you in" description={message}>
+      <Link
+        href="/sign-in"
+        className={buttonVariants({ className: "h-10 w-full" })}
+      >
+        Go to sign in
       </Link>
-      <main className="w-full max-w-sm text-center">
-        <h1 className="text-xl font-semibold tracking-tight">
-          We couldn&apos;t sign you in
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
-        <Link
-          href="/sign-in"
-          className={buttonVariants({ className: "mt-6 w-full" })}
-        >
-          Go to sign in
-        </Link>
-      </main>
-    </div>
+    </AuthShell>
   );
 }

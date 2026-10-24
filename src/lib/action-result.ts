@@ -1,7 +1,13 @@
 /** What every server action returns. Expected failures come back as data, not exceptions. */
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
-  | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
+  | {
+      ok: false;
+      error: string;
+      fieldErrors?: Record<string, string[]>;
+      /** A stable name for failures the form handles specially. */
+      code?: string;
+    };
 
 /** `useActionState` starts from null, before the form is first submitted. */
 export type FormState<T = undefined> = ActionResult<T> | null;
@@ -13,6 +19,7 @@ export function ok<T = undefined>(data?: T): ActionResult<T> {
 export function fail(
   error: string,
   fieldErrors?: Record<string, string[]>,
+  code?: string,
 ): ActionResult<never> {
-  return { ok: false, error, fieldErrors };
+  return { ok: false, error, fieldErrors, code };
 }
