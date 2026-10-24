@@ -22,6 +22,20 @@
       "when": 1792853483360,
       "tag": "20261024145123_core_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792853729893,
+      "tag": "20261024145529_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792853736382,
+      "tag": "20261024145536_invitation_functions",
+      "breakpoints": true
     }
   ]
 }

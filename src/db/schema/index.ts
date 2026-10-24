@@ -4,3 +4,4 @@ export * from "./profiles";
 export * from "./workspaces";
 export * from "./memberships";
 export * from "./audit-log";
+export * from "./invitations";

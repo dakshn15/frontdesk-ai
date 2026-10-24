@@ -1,6 +1,10 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { AuthClaims } from "@/db";
 import type { WorkspaceRole } from "@/db/schema";
+import {
+  createInviteToken,
+  inviteExpiresAt,
+} from "@/features/team/invite-token";
 import { adminAuth, asUser, testSql } from "./test-db";
 
 export type TestUser = { id: string; email: string; password: string };
@@ -53,6 +57,25 @@ export async function addTestMember(
   role: WorkspaceRole,
 ): Promise<void> {
   await testSql`insert into public.memberships (workspace_id, user_id, role) values (${workspaceId}, ${user.id}, ${role})`;
+}
+
+/** Creates an invite as `invitedBy`, through row level security, and returns its raw token. */
+export async function createTestInvite(
+  workspaceId: string,
+  invitedBy: TestUser,
+  opts: { email: string; role: "admin" | "staff"; expiresAt?: Date },
+): Promise<{ id: string; token: string }> {
+  const { token, tokenHash } = createInviteToken();
+  const expiresAt = opts.expiresAt ?? inviteExpiresAt(new Date());
+  const [row] = await asUser(
+    invitedBy.id,
+    (tx) =>
+      tx<{ id: string }[]>`
+        insert into public.invitations (workspace_id, email, role, token_hash, invited_by, expires_at)
+        values (${workspaceId}, ${opts.email.toLowerCase()}, ${opts.role}, ${tokenHash}, ${invitedBy.id}, ${expiresAt})
+        returning id`,
+  );
+  return { id: row.id, token };
 }
 
 export function trackWorkspace(id: string): void {
