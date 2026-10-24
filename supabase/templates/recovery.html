@@ -1,0 +1,21 @@
+<h2>Reset your password</h2>
+<p>Someone asked to reset the password for your FrontDesk AI account.</p>
+<p>
+  <a
+    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/update-password"
+    style="
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: #0f766e;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+    "
+    >Choose a new password</a
+  >
+</p>
+<p>
+  If you didn't ask for this, you can ignore this email. Your password won't
+  change.
+</p>
