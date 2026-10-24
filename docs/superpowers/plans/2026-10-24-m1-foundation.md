@@ -47,11 +47,13 @@ Out (later milestones): onboarding steps for services, staff, hours and knowledg
 ### Task 1: Scaffold the app and tooling
 
 **Files:**
+
 - Create (by create-next-app): `package.json`, `src/app/*`, `tsconfig.json`, `eslint.config.mjs`, `next.config.ts`, `AGENTS.md`
 - Create: `src/env/schema.ts`, `src/env/server.ts`, `src/env/client.ts`, `vitest.config.ts`, `tests/helpers/server-only-stub.ts`, `tests/unit/env.test.ts`, `.env.example`, `.nvmrc`, `.prettierrc.json`, `.prettierignore`
 - Modify: `.gitignore`
 
 **Interfaces:**
+
 - Produces:
   - `parseServerEnv(source: Record<string, string | undefined>): ServerEnv` and `parseClientEnv(source: Record<string, string | undefined>): ClientEnv` in `src/env/schema.ts`
   - `ServerEnv = { DATABASE_URL: string; DB_POOL_MAX: number; NEXT_PUBLIC_SUPABASE_URL: string; NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: string; NEXT_PUBLIC_SITE_URL: string; NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: boolean }`; `ClientEnv` holds the four `NEXT_PUBLIC_*` fields
@@ -64,6 +66,7 @@ Out (later milestones): onboarding steps for services, staff, hours and knowledg
 ```bash
 npx create-next-app@16.4.3 . --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --no-react-compiler --yes
 ```
+
 Expected: "Success! Created frontdesk-ai". If the CLI rejects `--no-react-compiler`, drop the flag and answer No at the prompt.
 
 - [ ] **Step 2: Read `AGENTS.md`, list `node_modules/next/dist/docs/`, and remove `cacheComponents: true` from `next.config.ts` if the scaffold set it**
@@ -78,6 +81,7 @@ npm i -D -E typescript@5.9.3 eslint-config-next@16.4.3 vitest@5.0.5 vite-tsconfi
 - [ ] **Step 4: Initialise git and commit the scaffold**
 
 Add `.nvmrc` containing `24`. Add to `.gitignore`: `.env*.local`, `/test-results`, `/playwright-report`, `/blob-report`, `/supabase/.temp`, `/supabase/.branches`.
+
 ```bash
 git init -b main
 git add -A
@@ -100,7 +104,11 @@ it("parses a complete environment and applies defaults", () => {
   expect(env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED).toBe(false);
 });
 it("reads the Google flag and pool size", () => {
-  const env = parseServerEnv({ ...full, NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: "true", DB_POOL_MAX: "1" });
+  const env = parseServerEnv({
+    ...full,
+    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: "true",
+    DB_POOL_MAX: "1",
+  });
   expect(env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED).toBe(true);
   expect(env.DB_POOL_MAX).toBe(1);
 });
@@ -133,6 +141,7 @@ Expected: 4 tests pass; lint, typecheck and build succeed.
 - [ ] **Step 9: Add `.env.example`, Prettier and commit**
 
 `.env.example` lists `DATABASE_URL`, `DB_POOL_MAX`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`, and the test-only `SUPABASE_SECRET_KEY` and `MAILPIT_URL`, each with a one-line comment. `.prettierrc.json` is `{}`; `.prettierignore` holds `.next`, `supabase/migrations/meta`, `package-lock.json`, `playwright-report`, `test-results`.
+
 ```bash
 npm run format
 git add -A
@@ -144,10 +153,12 @@ git commit -m "chore: env validation, Vitest and Prettier"
 ### Task 2: Local Supabase, the database client and `withRls`
 
 **Files:**
+
 - Create: `supabase/config.toml` (by `supabase init`), `scripts/supabase-env.ts`, `src/db/connection.ts`, `src/db/index.ts`, `src/db/admin.ts`, `src/db/errors.ts`, `src/db/schema/index.ts` (empty barrel for now), `tests/unit/supabase-env.test.ts`, `tests/unit/db-errors.test.ts`, `tests/integration/global-setup.ts`, `tests/integration/setup.ts`, `tests/integration/rls-client.test.ts`
 - Modify: `package.json`, `eslint.config.mjs`, `vitest.config.ts` (add the `integration` project: include `tests/integration/**/*.test.ts`, `globalSetup: "tests/integration/global-setup.ts"`, `setupFiles: ["tests/integration/setup.ts"]`, `env: { DB_POOL_MAX: "1" }`, `testTimeout: 20000`)
 
 **Interfaces:**
+
 - Consumes: `getServerEnv` (Task 1)
 - Produces:
   - `parseEnvOutput(text: string): Record<string, string>` and `mapSupabaseStatus(vars: Record<string, string | undefined>): Record<string, string>` in `scripts/supabase-env.ts`; run directly, it prints `KEY=value` lines
@@ -176,15 +187,25 @@ Expected: API on `http://127.0.0.1:54321`, database on port 54322, and an env li
 - [ ] **Step 4: Write the failing test `tests/unit/supabase-env.test.ts`**
 
 ```ts
-it("parses KEY=\"value\" lines", () => {
-  expect(parseEnvOutput('API_URL="http://127.0.0.1:54321"\nDB_URL="postgresql://x"\n')).toEqual({
+it('parses KEY="value" lines', () => {
+  expect(
+    parseEnvOutput(
+      'API_URL="http://127.0.0.1:54321"\nDB_URL="postgresql://x"\n',
+    ),
+  ).toEqual({
     API_URL: "http://127.0.0.1:54321",
     DB_URL: "postgresql://x",
   });
 });
 it("maps CLI names to app names", () => {
   expect(
-    mapSupabaseStatus({ API_URL: "http://a", DB_URL: "postgresql://d", PUBLISHABLE_KEY: "pk", SECRET_KEY: "sk", MAILPIT_URL: "http://m" }),
+    mapSupabaseStatus({
+      API_URL: "http://a",
+      DB_URL: "postgresql://d",
+      PUBLISHABLE_KEY: "pk",
+      SECRET_KEY: "sk",
+      MAILPIT_URL: "http://m",
+    }),
   ).toEqual({
     NEXT_PUBLIC_SUPABASE_URL: "http://a",
     DATABASE_URL: "postgresql://d",
@@ -196,13 +217,26 @@ it("maps CLI names to app names", () => {
   });
 });
 it("falls back to legacy key names and the default mail URL", () => {
-  const out = mapSupabaseStatus({ API_URL: "http://a", DB_URL: "postgresql://d", ANON_KEY: "anon", SERVICE_ROLE_KEY: "service" });
+  const out = mapSupabaseStatus({
+    API_URL: "http://a",
+    DB_URL: "postgresql://d",
+    ANON_KEY: "anon",
+    SERVICE_ROLE_KEY: "service",
+  });
   expect(out.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).toBe("anon");
   expect(out.SUPABASE_SECRET_KEY).toBe("service");
   expect(out.MAILPIT_URL).toBe("http://127.0.0.1:54324");
 });
 it("uses INBUCKET_URL when that's what the CLI prints", () => {
-  expect(mapSupabaseStatus({ API_URL: "http://a", DB_URL: "postgresql://d", ANON_KEY: "a", SERVICE_ROLE_KEY: "s", INBUCKET_URL: "http://i" }).MAILPIT_URL).toBe("http://i");
+  expect(
+    mapSupabaseStatus({
+      API_URL: "http://a",
+      DB_URL: "postgresql://d",
+      ANON_KEY: "a",
+      SERVICE_ROLE_KEY: "s",
+      INBUCKET_URL: "http://i",
+    }).MAILPIT_URL,
+  ).toBe("http://i");
 });
 it("explains what to do when the stack isn't running", () => {
   expect(() => mapSupabaseStatus({})).toThrow(/npm run db:start/);
@@ -227,10 +261,18 @@ Expected: tests pass; `.env.local` holds the 7 keys.
 
 ```ts
 it("reads a Postgres error", () => {
-  expect(getPgError({ code: "23505", message: "duplicate key" })).toEqual({ code: "23505", message: "duplicate key" });
+  expect(getPgError({ code: "23505", message: "duplicate key" })).toEqual({
+    code: "23505",
+    message: "duplicate key",
+  });
 });
 it("unwraps Drizzle's query error", () => {
-  expect(getPgError({ message: "Failed query", cause: { code: "P0001", message: "last_owner" } })).toEqual({ code: "P0001", message: "last_owner" });
+  expect(
+    getPgError({
+      message: "Failed query",
+      cause: { code: "P0001", message: "last_owner" },
+    }),
+  ).toEqual({ code: "P0001", message: "last_owner" });
 });
 it("returns null for anything else", () => {
   expect(getPgError(new Error("x"))).toBeNull();
@@ -247,20 +289,31 @@ Run: `npm test` Expected: PASS.
 - [ ] **Step 10: Write the integration setup and the failing test `tests/integration/rls-client.test.ts`**
 
 `setup.ts` loads `.env.local` with `process.loadEnvFile` when the file exists. `global-setup.ts` loads it the same way, runs `select 1` with postgres.js, and on failure throws `Local Supabase isn't reachable. Start Docker Desktop, then run npm run db:start.`
+
 ```ts
 const sub = randomUUID();
 it("runs as authenticated with the caller's id and claims", async () => {
   const [row] = await withRls({ sub, email: "a@example.com" }, (tx) =>
-    tx.execute(sql`select auth.uid()::text as uid, current_user as role, auth.jwt()->>'email' as email`),
+    tx.execute(
+      sql`select auth.uid()::text as uid, current_user as role, auth.jwt()->>'email' as email`,
+    ),
   );
-  expect(row).toEqual({ uid: sub, role: "authenticated", email: "a@example.com" });
+  expect(row).toEqual({
+    uid: sub,
+    role: "authenticated",
+    email: "a@example.com",
+  });
 });
 it("runs as anon without claims", async () => {
-  const [row] = await withRls(null, (tx) => tx.execute(sql`select auth.uid() as uid, current_user as role`));
+  const [row] = await withRls(null, (tx) =>
+    tx.execute(sql`select auth.uid() as uid, current_user as role`),
+  );
   expect(row).toEqual({ uid: null, role: "anon" });
 });
 it("ignores a role claim, so a token can't escalate", async () => {
-  const [row] = await withRls({ sub, role: "service_role" }, (tx) => tx.execute(sql`select current_user as role`));
+  const [row] = await withRls({ sub, role: "service_role" }, (tx) =>
+    tx.execute(sql`select current_user as role`),
+  );
   expect(row.role).toBe("authenticated");
 });
 it("doesn't leak the role past the transaction", async () => {
@@ -269,20 +322,33 @@ it("doesn't leak the role past the transaction", async () => {
   expect(row.role).toBe("postgres");
 });
 it("rolls back and rethrows when the callback throws", async () => {
-  await expect(withRls({ sub }, async () => { throw new Error("boom"); })).rejects.toThrow("boom");
+  await expect(
+    withRls({ sub }, async () => {
+      throw new Error("boom");
+    }),
+  ).rejects.toThrow("boom");
 });
 ```
+
 Run: `npm run test:integration` Expected: FAIL, `@/db` not found.
 
 - [ ] **Step 11: Implement `src/db/connection.ts`, `src/db/index.ts`, `src/db/admin.ts`**
 
 `connection.ts`: `postgres(env.DATABASE_URL, { prepare: false, max: env.DB_POOL_MAX })` (`prepare: false` is required by Supabase's transaction pooler) and `drizzle(client, { schema, casing: "snake_case" })`. `withRls` runs `db.transaction`, then one statement that sets both settings, then the role:
+
 ```ts
-const claimsJson = JSON.stringify(claims ? { ...claims, role: "authenticated" } : { role: "anon" });
-await tx.execute(sql`select set_config('request.jwt.claims', ${claimsJson}, true), set_config('request.jwt.claim.sub', ${claims?.sub ?? ""}, true)`);
-await tx.execute(sql.raw(claims ? "set local role authenticated" : "set local role anon"));
+const claimsJson = JSON.stringify(
+  claims ? { ...claims, role: "authenticated" } : { role: "anon" },
+);
+await tx.execute(
+  sql`select set_config('request.jwt.claims', ${claimsJson}, true), set_config('request.jwt.claim.sub', ${claims?.sub ?? ""}, true)`,
+);
+await tx.execute(
+  sql.raw(claims ? "set local role authenticated" : "set local role anon"),
+);
 return fn(tx);
 ```
+
 `RlsTx` is the transaction parameter type (`Parameters<Parameters<typeof db.transaction>[0]>[0]`). `set local` ends with the transaction, so no reset is needed.
 
 - [ ] **Step 12: Run, see it pass**
@@ -305,10 +371,12 @@ git commit -m "feat(db): local Supabase, Drizzle client and withRls"
 ### Task 3: Core schema: profiles, workspaces, memberships, audit log
 
 **Files:**
+
 - Create: `drizzle.config.ts`, `src/db/schema/enums.ts`, `src/db/schema/profiles.ts`, `src/db/schema/workspaces.ts`, `src/db/schema/memberships.ts`, `src/db/schema/audit-log.ts`, `supabase/migrations/<ts>_private_helpers.sql` (custom), `supabase/migrations/<ts>_core_tables.sql` (generated), `supabase/migrations/<ts>_core_functions.sql` (custom), `tests/helpers/test-db.ts`, `tests/helpers/seed.ts`, `tests/integration/core-schema.test.ts`
 - Modify: `src/db/schema/index.ts`
 
 **Interfaces:**
+
 - Consumes: `withRls`, `adminDb`, `getPgError`, `AuthClaims` (Task 2)
 - Produces:
   - Drizzle: enum `workspaceRole` and `type WorkspaceRole = "owner" | "admin" | "staff"`; tables `profiles`, `workspaces`, `memberships`, `auditLog`
@@ -317,6 +385,7 @@ git commit -m "feat(db): local Supabase, Drizzle client and withRls"
   - Test helpers (they use their own postgres.js connection and only type imports from `src/`, so Playwright can load them): `type TestUser = { id: string; email: string; password: string }`; `createTestUser(opts?: { email?: string; fullName?: string; password?: string }): Promise<TestUser>` (Auth admin API with `email_confirm: true`; default email `test-<uuid>@example.com`, default password `Password123!`); `claimsFor(user: TestUser): AuthClaims`; `createTestWorkspace(owner: TestUser, opts?: { name?: string }): Promise<{ id: string; slug: string }>` (calls `private.create_workspace` as the owner; slug `test-<8 hex>`, time zone `America/Chicago`, currency `USD`); `addTestMember(workspaceId: string, user: TestUser, role: WorkspaceRole): Promise<void>`; `trackWorkspace(id: string): void`; `cleanupTestData(): Promise<void>` (deletes tracked workspaces first, then tracked users)
 
 `drizzle.config.ts`:
+
 ```ts
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 export default defineConfig({
@@ -333,31 +402,32 @@ export default defineConfig({
 
 Tables:
 
-| Table | Columns | Constraints |
-|---|---|---|
-| `profiles` | `id` uuid pk → `auth.users.id` on delete cascade; `email` text not null; `fullName` text not null default `''`; `avatarUrl` text; `createdAt`, `updatedAt` timestamptz not null default now() (`updatedAt` uses `$onUpdate`) | |
-| `workspaces` | `id`; `name` text not null; `slug` text not null unique; `website` text; `timezone` text not null; `currency` text not null; `createdBy` uuid → `profiles.id` on delete set null; `createdAt`; `updatedAt` | check `char_length(name) between 2 and 80`; check `slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(slug) between 3 and 48`; check `currency ~ '^[A-Z]{3}$'` |
-| `memberships` | `id`; `workspaceId` → workspaces on delete cascade; `userId` → `profiles.id` on delete cascade; `role` workspace_role not null; `createdAt` | unique (`workspace_id`, `user_id`); index (`user_id`) |
-| `audit_log` | `id`; `workspaceId` → workspaces on delete cascade, nullable; `actorId` → `profiles.id` on delete set null; `action` text not null; `targetType` text; `targetId` uuid; `metadata` jsonb not null default `'{}'`; `createdAt` | index (`workspace_id`, `created_at` desc) |
+| Table         | Columns                                                                                                                                                                                                                       | Constraints                                                                                                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`    | `id` uuid pk → `auth.users.id` on delete cascade; `email` text not null; `fullName` text not null default `''`; `avatarUrl` text; `createdAt`, `updatedAt` timestamptz not null default now() (`updatedAt` uses `$onUpdate`)  |                                                                                                                                                               |
+| `workspaces`  | `id`; `name` text not null; `slug` text not null unique; `website` text; `timezone` text not null; `currency` text not null; `createdBy` uuid → `profiles.id` on delete set null; `createdAt`; `updatedAt`                    | check `char_length(name) between 2 and 80`; check `slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(slug) between 3 and 48`; check `currency ~ '^[A-Z]{3}$'` |
+| `memberships` | `id`; `workspaceId` → workspaces on delete cascade; `userId` → `profiles.id` on delete cascade; `role` workspace_role not null; `createdAt`                                                                                   | unique (`workspace_id`, `user_id`); index (`user_id`)                                                                                                         |
+| `audit_log`   | `id`; `workspaceId` → workspaces on delete cascade, nullable; `actorId` → `profiles.id` on delete set null; `action` text not null; `targetType` text; `targetId` uuid; `metadata` jsonb not null default `'{}'`; `createdAt` | index (`workspace_id`, `created_at` desc)                                                                                                                     |
 
 Policies, all `to authenticated` (import roles from `drizzle-orm/supabase`). A command with no policy is denied. `{owner,admin}` below means `array['owner','admin']`, a `text[]`, so the helpers don't depend on the enum and can be created before the tables.
 
-| Table | For | Using | With check |
-|---|---|---|---|
-| profiles | select | `id = (select auth.uid()) or private.shares_workspace(id)` | |
-| profiles | update | `id = (select auth.uid())` | `id = (select auth.uid())` |
-| workspaces | select | `private.is_member(id)` | |
-| workspaces | update | `private.has_role(id, {owner,admin})` | same |
-| workspaces | delete | `private.has_role(id, {owner})` | |
-| memberships | select | `private.is_member(workspace_id)` | |
-| memberships | update | `private.has_role(workspace_id, {owner}) or (private.has_role(workspace_id, {admin}) and role <> 'owner')` | `role <> 'owner' or private.has_role(workspace_id, {owner})` |
-| memberships | delete | `user_id = (select auth.uid()) or private.has_role(workspace_id, {owner}) or (private.has_role(workspace_id, {admin}) and role <> 'owner')` | |
-| audit_log | select | `private.has_role(workspace_id, {owner,admin})` | |
-| audit_log | insert | | `private.is_member(workspace_id) and actor_id = (select auth.uid())` |
+| Table       | For    | Using                                                                                                                                       | With check                                                           |
+| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| profiles    | select | `id = (select auth.uid()) or private.shares_workspace(id)`                                                                                  |                                                                      |
+| profiles    | update | `id = (select auth.uid())`                                                                                                                  | `id = (select auth.uid())`                                           |
+| workspaces  | select | `private.is_member(id)`                                                                                                                     |                                                                      |
+| workspaces  | update | `private.has_role(id, {owner,admin})`                                                                                                       | same                                                                 |
+| workspaces  | delete | `private.has_role(id, {owner})`                                                                                                             |                                                                      |
+| memberships | select | `private.is_member(workspace_id)`                                                                                                           |                                                                      |
+| memberships | update | `private.has_role(workspace_id, {owner}) or (private.has_role(workspace_id, {admin}) and role <> 'owner')`                                  | `role <> 'owner' or private.has_role(workspace_id, {owner})`         |
+| memberships | delete | `user_id = (select auth.uid()) or private.has_role(workspace_id, {owner}) or (private.has_role(workspace_id, {admin}) and role <> 'owner')` |                                                                      |
+| audit_log   | select | `private.has_role(workspace_id, {owner,admin})`                                                                                             |                                                                      |
+| audit_log   | insert |                                                                                                                                             | `private.is_member(workspace_id) and actor_id = (select auth.uid())` |
 
 - [ ] **Step 1: Write the test helpers and the failing test `tests/integration/core-schema.test.ts`**
 
 `afterAll(cleanupTestData)`. Users are `ana` (owner), `ben`, `cara`, created per test with `createTestUser`. Assertions:
+
 - "creates a profile when a user signs up": `createTestUser({ fullName: "Ana Lopez" })`; the `profiles` row (read with `adminDb`) has that email and `fullName: "Ana Lopez"`.
 - "create_workspace makes the caller the owner and logs it": after `createTestWorkspace(ana)`, `withRls(claimsFor(ana))` reads one membership with `role: "owner"` and an `audit_log` row with `action: "workspace.created"`.
 - "anonymous callers can't create workspaces": `withRls(null, tx => tx.execute(sql\`select private.create_workspace('X Salon','x-salon',null,'UTC','USD')\`))` rejects.
@@ -378,6 +448,7 @@ Expected: FAIL, `relation "public.workspaces" does not exist` or `function priva
 - [ ] **Step 2: Create the helper functions migration**
 
 Run: `npx drizzle-kit generate --custom --name=private_helpers` and fill the file. Use plpgsql, so the bodies can name `public.memberships` before the table exists:
+
 ```sql
 create schema if not exists private;
 
@@ -387,6 +458,7 @@ begin
   return exists (select 1 from public.memberships m where m.workspace_id = ws and m.user_id = (select auth.uid()));
 end $$;
 ```
+
 `private.has_role(ws uuid, roles text[])` is the same with `and m.role::text = any(roles)`. `private.shares_workspace(other uuid)` returns whether a membership for the caller and a membership for `other` share a `workspace_id`.
 
 - [ ] **Step 3: Write the schema files and generate the tables migration**
@@ -398,7 +470,9 @@ Expected: one SQL file with the enum, 4 tables, the check constraints, RLS enabl
 - [ ] **Step 4: Create the functions migration**
 
 Run: `npx drizzle-kit generate --custom --name=core_functions` and fill it, in this order:
+
 1. Profiles follow `auth.users`:
+
 ```sql
 create function private.handle_new_user() returns trigger
 language plpgsql security definer set search_path = '' as $$
@@ -412,14 +486,17 @@ end $$;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function private.handle_new_user();
 ```
-   Add `private.sync_profile_email()` with trigger `on_auth_user_email_changed` (`after update of email on auth.users … when (old.email is distinct from new.email)`), which copies the new email to `profiles`.
-2. Users may edit only their name and avatar:
+
+Add `private.sync_profile_email()` with trigger `on_auth_user_email_changed` (`after update of email on auth.users … when (old.email is distinct from new.email)`), which copies the new email to `profiles`. 2. Users may edit only their name and avatar:
+
 ```sql
 revoke update on public.profiles from authenticated, anon;
 grant update (full_name, avatar_url, updated_at) on public.profiles to authenticated;
 ```
+
 3. Time zones must be real: `private.validate_workspace()` runs `perform now() at time zone new.timezone;` (Postgres raises on unknown zones), on trigger `before insert or update of timezone on public.workspaces`.
 4. A workspace always keeps an owner. The row lock serialises owner changes in one workspace, so two owners can't step down at the same moment; `found` is false when the whole workspace is being deleted, so the cascade isn't blocked:
+
 ```sql
 create function private.ensure_workspace_has_owner() returns trigger
 language plpgsql security definer set search_path = '' as $$
@@ -439,7 +516,9 @@ end $$;
 create trigger ensure_workspace_has_owner before update of role or delete on public.memberships
   for each row execute function private.ensure_workspace_has_owner();
 ```
+
 5. Workspace creation:
+
 ```sql
 create function private.create_workspace(p_name text, p_slug text, p_website text, p_timezone text, p_currency text)
 returns uuid language plpgsql security definer set search_path = '' as $$
@@ -457,7 +536,9 @@ begin
   return v_id;
 end $$;
 ```
+
 6. Grants:
+
 ```sql
 revoke all on schema private from public;
 grant usage on schema private to anon, authenticated;
@@ -489,10 +570,12 @@ git commit -m "feat(db): workspaces, memberships, profiles and audit log with RL
 ### Task 4: Invitations
 
 **Files:**
+
 - Create: `src/db/schema/invitations.ts`, `supabase/migrations/<ts>_invitations.sql` (generated), `supabase/migrations/<ts>_invitation_functions.sql` (custom), `src/features/team/invite-token.ts`, `tests/unit/invite-token.test.ts`, `tests/integration/invitations.test.ts`
 - Modify: `src/db/schema/index.ts`, `tests/helpers/seed.ts`
 
 **Interfaces:**
+
 - Consumes: Task 3 tables, SQL helpers and test helpers
 - Produces:
   - `INVITE_TTL_DAYS = 7`; `createInviteToken(): { token: string; tokenHash: string }`; `hashInviteToken(token: string): string`; `inviteExpiresAt(now: Date): Date`; `type InviteStatus = "pending" | "accepted" | "revoked" | "expired"`; `inviteStatus(invite: { acceptedAt: Date | null; revokedAt: Date | null; expiresAt: Date }, now: Date): InviteStatus`
@@ -517,24 +600,39 @@ it("creates a URL-safe token and its SHA-256 hash", () => {
   expect(tokenHash).toMatch(/^[a-f0-9]{64}$/);
 });
 it("never repeats a token", () => {
-  expect(new Set(Array.from({ length: 100 }, () => createInviteToken().token)).size).toBe(100);
+  expect(
+    new Set(Array.from({ length: 100 }, () => createInviteToken().token)).size,
+  ).toBe(100);
 });
 it("hashes the same way every time", () => {
-  expect(hashInviteToken("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+  expect(hashInviteToken("abc")).toBe(
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+  );
 });
 it("expires exactly 7 days later", () => {
-  expect(inviteExpiresAt(new Date("2026-10-24T10:00:00Z")).toISOString()).toBe("2026-10-31T10:00:00.000Z");
+  expect(inviteExpiresAt(new Date("2026-10-24T10:00:00Z")).toISOString()).toBe(
+    "2026-10-31T10:00:00.000Z",
+  );
 });
 it("reports status in precedence order", () => {
   const now = new Date("2026-10-24T10:00:00Z");
   const past = new Date("2026-10-20T00:00:00Z");
   const future = new Date("2026-10-30T00:00:00Z");
-  expect(inviteStatus({ acceptedAt: past, revokedAt: null, expiresAt: past }, now)).toBe("accepted");
-  expect(inviteStatus({ acceptedAt: null, revokedAt: past, expiresAt: past }, now)).toBe("revoked");
-  expect(inviteStatus({ acceptedAt: null, revokedAt: null, expiresAt: now }, now)).toBe("expired");
-  expect(inviteStatus({ acceptedAt: null, revokedAt: null, expiresAt: future }, now)).toBe("pending");
+  expect(
+    inviteStatus({ acceptedAt: past, revokedAt: null, expiresAt: past }, now),
+  ).toBe("accepted");
+  expect(
+    inviteStatus({ acceptedAt: null, revokedAt: past, expiresAt: past }, now),
+  ).toBe("revoked");
+  expect(
+    inviteStatus({ acceptedAt: null, revokedAt: null, expiresAt: now }, now),
+  ).toBe("expired");
+  expect(
+    inviteStatus({ acceptedAt: null, revokedAt: null, expiresAt: future }, now),
+  ).toBe("pending");
 });
 ```
+
 Run: `npm test` Expected: FAIL, module not found.
 
 - [ ] **Step 2: Implement `src/features/team/invite-token.ts`, see it pass**
@@ -548,7 +646,7 @@ Run: `npm test` Expected: PASS.
 - "owners and admins can invite; staff can't": inserting as staff rejects with `42501`.
 - "nobody can be invited as owner": inserting `role: "owner"` as the owner rejects with `23514`.
 - "one pending invite per email": a second pending invite for the same email rejects with `23505`.
-- "accepting adds the member with the invited role": ben accepts a staff invite through `withRls(claimsFor(ben), tx => tx.execute(sql\`select private.accept_invitation(${token}) as slug\`))`; the result is the workspace slug; ben's membership has `role: "staff"`; the invite has `acceptedAt` set and `acceptedBy` = ben; `audit_log` has `member.joined`.
+- "accepting adds the member with the invited role": ben accepts a staff invite through `withRls(claimsFor(ben), tx => tx.execute(sql\`select private.accept_invitation(${token}) as slug\`))`; the result is the workspace slug; ben's membership has `role: "staff"`; the invite has `acceptedAt`set and`acceptedBy`= ben;`audit_log`has`member.joined`.
 - "accepts regardless of email case": user created as `Ana.Case.<uuid>@Example.com`, invite stored as the lower-case email; accepting succeeds.
 - "rejects used, expired, revoked, wrong-email and unknown tokens": each rejects with `P0001` and `invite_used`, `invite_expired` (invite created with `expiresAt` in the past), `invite_revoked` (set `revoked_at` with `adminDb`), `invite_email_mismatch` (cara uses ben's invite), `invite_not_found` (random token).
 - "accepting when already a member keeps the current role": an existing admin accepts a staff invite for their own email (inserted with `adminDb`); their role stays `admin`.
@@ -561,6 +659,7 @@ Expected: FAIL, relation `invitations` does not exist.
 - [ ] **Step 4: Add the table, generate and write the functions migration**
 
 Write `src/db/schema/invitations.ts`, then run `npm run db:generate -- --name=invitations` and `npx drizzle-kit generate --custom --name=invitation_functions`. Fill the custom file:
+
 ```sql
 create function private.accept_invitation(p_token text) returns text
 language plpgsql security definer set search_path = '' as $$
@@ -590,12 +689,15 @@ begin
   return v_slug;
 end $$;
 ```
+
 `private.invitation_preview` is `language sql stable security definer set search_path = ''`. It joins `invitations` to `workspaces` and left-joins `profiles` on `invited_by` (`coalesce(full_name, '')`), filters on the same token hash expression, and computes `status` with a `case` in the precedence above. Then:
+
 ```sql
 revoke execute on function private.accept_invitation(text), private.invitation_preview(text) from public;
 grant execute on function private.accept_invitation(text) to authenticated;
 grant execute on function private.invitation_preview(text) to anon, authenticated;
 ```
+
 Add `createTestInvite` to `tests/helpers/seed.ts`. It inserts as the inviter through RLS, with `createInviteToken()` and `inviteExpiresAt(new Date())` unless `expiresAt` is given.
 
 - [ ] **Step 5: Apply and run, see it pass**
@@ -615,12 +717,14 @@ git commit -m "feat(db): invitations with hashed tokens, accept and preview func
 ### Task 5: Base UI, theme and landing page
 
 **Files:**
+
 - Create (by shadcn): `components.json`, `src/components/ui/*`, `src/lib/utils.ts`
 - Create: `src/components/brand/logo.tsx`, `src/components/theme/theme-provider.tsx`, `src/components/theme/theme-toggle.tsx`, `src/app/(marketing)/page.tsx`, `src/app/(auth)/layout.tsx`, `playwright.config.ts`, `tests/e2e/smoke.spec.ts`
 - Modify: `src/app/layout.tsx`, `src/app/globals.css`, `package.json` (script `test:e2e`: `playwright test`)
 - Delete: `src/app/page.tsx` (the `(marketing)` page replaces it)
 
 **Interfaces:**
+
 - Produces: `<Logo className?: string showName?: boolean />` (default `showName = true`): the lucide `ConciergeBell` icon in a rounded primary-coloured square plus the wordmark "FrontDesk AI"; `<ThemeToggle />`, a dropdown with Light, Dark and System; the shadcn components listed in Step 2; an `(auth)` layout that centres its children in one column under a `<Logo>` linking to `/`
 
 - [ ] **Step 1: Load the `frontend-design` skill for the visual direction**
@@ -634,6 +738,7 @@ npx shadcn@4.22.1 init
 npx shadcn@4.22.1 add button input label card select dropdown-menu avatar badge dialog alert-dialog separator sonner sidebar skeleton tooltip command popover table
 npm i -E next-themes@0.4.6 lucide-react@1.61.0
 ```
+
 At the init prompts choose base colour Neutral with CSS variables.
 
 - [ ] **Step 3: Set the brand tokens in `src/app/globals.css`**
@@ -650,20 +755,31 @@ Light: `--primary: oklch(0.52 0.09 185)`, `--primary-foreground: oklch(0.985 0 0
 npm i -D -E @playwright/test@1.64.1
 npx playwright install chromium
 ```
+
 Config: load `.env.local` with `process.loadEnvFile` when present; `testDir: "tests/e2e"`; `fullyParallel: true`; `retries: process.env.CI ? 1 : 0`; `use: { baseURL: "http://localhost:3000", trace: "on-first-retry" }`; projects `desktop` (Desktop Chrome) and `mobile` (Pixel 7, `testMatch: /smoke\.spec\.ts/`); `webServer: { command: process.env.CI ? "npm run start" : "npm run dev", url: "http://localhost:3000", reuseExistingServer: !process.env.CI, timeout: 120_000 }`.
 
 - [ ] **Step 6: Write the failing test `tests/e2e/smoke.spec.ts`**
 
 ```ts
-test("the landing page explains the product and links to sign-up", async ({ page }) => {
+test("the landing page explains the product and links to sign-up", async ({
+  page,
+}) => {
   await page.goto("/");
   await expect(page).toHaveTitle("FrontDesk AI");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("The AI front desk that never guesses.");
-  await expect(page.getByRole("link", { name: "Create your workspace" })).toHaveAttribute("href", "/sign-up");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "The AI front desk that never guesses.",
+  );
+  await expect(
+    page.getByRole("link", { name: "Create your workspace" }),
+  ).toHaveAttribute("href", "/sign-up");
 });
 test("the page never scrolls sideways", async ({ page }) => {
   await page.goto("/");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 });
 test("the theme toggle switches to dark", async ({ page }) => {
   await page.goto("/");
@@ -672,6 +788,7 @@ test("the theme toggle switches to dark", async ({ page }) => {
   await expect(page.locator("html")).toHaveClass(/dark/);
 });
 ```
+
 Run: `npm run test:e2e` Expected: FAIL (the scaffold page is still there).
 
 - [ ] **Step 7: Build the landing page and the `(auth)` layout**
@@ -682,6 +799,7 @@ The header holds `<Logo>`, a "Sign in" link and `<ThemeToggle>` (accessible name
 
 Run: `npm run test:e2e`, `npm run lint`, `npm run typecheck`, `npm run build`
 Expected: smoke tests pass on desktop and mobile; the rest succeed.
+
 ```bash
 git add -A
 git commit -m "feat(ui): design tokens, theme, landing page and Playwright"
@@ -692,10 +810,12 @@ git commit -m "feat(ui): design tokens, theme, landing page and Playwright"
 ### Task 6: Sessions, proxy and auth routes
 
 **Files:**
+
 - Create: `src/lib/supabase/server.ts`, `src/lib/supabase/browser.ts`, `src/lib/supabase/proxy.ts`, `src/proxy.ts`, `src/lib/auth/redirect.ts`, `src/lib/auth/routing.ts`, `src/lib/auth/session.ts`, `src/lib/action-result.ts`, `src/features/workspaces/queries.ts`, `src/app/dashboard/page.tsx`, `src/app/auth/confirm/route.ts`, `src/app/auth/callback/route.ts`, `src/app/auth/sign-out/route.ts`, `src/app/auth/error/page.tsx`, `supabase/templates/confirmation.html`, `supabase/templates/recovery.html`, `tests/unit/redirect.test.ts`, `tests/unit/routing.test.ts`, `tests/e2e/auth-guard.spec.ts`
 - Modify: `supabase/config.toml`
 
 **Interfaces:**
+
 - Consumes: `withRls`, `AuthClaims` (Task 2); `memberships`, `workspaces`, `WorkspaceRole` (Task 3); `getServerEnv`, `clientEnv` (Task 1)
 - Produces:
   - `createSupabaseServerClient(): Promise<SupabaseClient>` (cookie-based, per the Supabase SSR guide) and `createSupabaseBrowserClient(): SupabaseClient`
@@ -728,8 +848,12 @@ it.each([
   expect(safeRedirectPath(next, site)).toBe(expected);
 });
 ```
+
 ```ts
-const toSignIn = (next: string) => ({ type: "redirect", to: `/sign-in?next=${encodeURIComponent(next)}` });
+const toSignIn = (next: string) => ({
+  type: "redirect",
+  to: `/sign-in?next=${encodeURIComponent(next)}`,
+});
 it.each([
   ["/dashboard", "", false, toSignIn("/dashboard")],
   ["/w/bloom/team", "?tab=1", false, toSignIn("/w/bloom/team?tab=1")],
@@ -746,6 +870,7 @@ it.each([
   expect(routeDecision(path, search, signedIn)).toEqual(expected);
 });
 ```
+
 Run: `npm test` Expected: FAIL, modules not found.
 
 - [ ] **Step 3: Implement `safeRedirectPath` and `routeDecision`, see them pass**
@@ -771,6 +896,7 @@ Follow the Supabase Next.js SSR guide, using the `NEXT_PUBLIC_SUPABASE_PUBLISHAB
 - [ ] **Step 7: Email templates**
 
 `confirmation.html`: heading "Confirm your email", the line "Click the button to finish creating your FrontDesk AI account.", and a button "Confirm email" linking to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}`. `recovery.html`: heading "Reset your password" and a button "Choose a new password" linking to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/update-password`. In `config.toml`:
+
 ```toml
 [auth.email.template.confirmation]
 subject = "Confirm your FrontDesk AI account"
@@ -780,26 +906,33 @@ content_path = "./supabase/templates/confirmation.html"
 subject = "Reset your FrontDesk AI password"
 content_path = "./supabase/templates/recovery.html"
 ```
+
 Run: `npm run db:stop` then `npm run db:start`. Expected: the stack restarts with no config errors.
 
 - [ ] **Step 8: Write and run `tests/e2e/auth-guard.spec.ts`**
 
 ```ts
-test("signed-out visitors go to sign-in with a return path", async ({ page }) => {
+test("signed-out visitors go to sign-in with a return path", async ({
+  page,
+}) => {
   await page.goto("/w/some-salon/team");
   await expect(page).toHaveURL("/sign-in?next=%2Fw%2Fsome-salon%2Fteam");
 });
 test("a bad confirmation link shows a helpful error", async ({ page }) => {
   await page.goto("/auth/confirm?token_hash=nope&type=email");
   await expect(page).toHaveURL("/auth/error?reason=link");
-  await expect(page.getByText("That link has expired or was already used.")).toBeVisible();
+  await expect(
+    page.getByText("That link has expired or was already used."),
+  ).toBeVisible();
 });
 ```
+
 Run: `npm run test:e2e` Expected: PASS.
 
 - [ ] **Step 9: Verify and commit**
 
 Run: `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`. Expected: all succeed.
+
 ```bash
 git add -A
 git commit -m "feat(auth): Supabase sessions, proxy guard and auth routes"
@@ -810,9 +943,11 @@ git commit -m "feat(auth): Supabase sessions, proxy guard and auth routes"
 ### Task 7: Sign-up, sign-in and password reset screens
 
 **Files:**
+
 - Create: `src/features/auth/schemas.ts`, `src/features/auth/actions.ts`, `src/app/(auth)/sign-up/page.tsx`, `src/app/(auth)/sign-up/sign-up-form.tsx`, `src/app/(auth)/sign-in/page.tsx`, `src/app/(auth)/sign-in/sign-in-form.tsx`, `src/app/(auth)/forgot-password/page.tsx`, `src/app/(auth)/forgot-password/forgot-password-form.tsx`, `src/app/account/update-password/page.tsx`, `src/app/account/update-password/update-password-form.tsx`, `src/components/auth/google-button.tsx`, `tests/unit/auth-schemas.test.ts`, `tests/e2e/helpers/mailpit.ts`, `tests/e2e/helpers/auth.ts`, `tests/e2e/auth.spec.ts`
 
 **Interfaces:**
+
 - Consumes: Task 6 (`createSupabaseServerClient`, `createSupabaseBrowserClient`, `safeRedirectPath`, `requireUser`, `ActionResult`, `clientEnv`); `createTestUser` (Task 3)
 - Produces:
   - Zod schemas: `signUpSchema` (`fullName` trimmed, 1 to 80; `email` trimmed and lower-cased; `password` 8 to 72), `signInSchema` (`email`, `password` min 1, optional `next`), `emailOnlySchema`, `newPasswordSchema` (`password` 8 to 72 and `confirmPassword`, refined to match, with the issue on `confirmPassword`)
@@ -822,18 +957,19 @@ git commit -m "feat(auth): Supabase sessions, proxy guard and auth routes"
 
 Exact copy:
 
-| Situation | Text |
-|---|---|
-| Sign-up succeeded (also shown for emails that already have an account) | "Check your inbox. We sent a link to confirm your email." |
-| `invalid_credentials` | "That email and password don't match." |
-| `email_not_confirmed` | "Confirm your email first." plus a button "Send the link again" |
-| Resend done | "We sent a new link." |
-| Reset requested (always) | "If there's an account for that email, we've sent a reset link." |
-| Passwords differ | "Passwords don't match." |
-| Password too short | "Use at least 8 characters." |
-| Any other auth error | "Something went wrong. Try again in a moment." |
+| Situation                                                              | Text                                                             |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Sign-up succeeded (also shown for emails that already have an account) | "Check your inbox. We sent a link to confirm your email."        |
+| `invalid_credentials`                                                  | "That email and password don't match."                           |
+| `email_not_confirmed`                                                  | "Confirm your email first." plus a button "Send the link again"  |
+| Resend done                                                            | "We sent a new link."                                            |
+| Reset requested (always)                                               | "If there's an account for that email, we've sent a reset link." |
+| Passwords differ                                                       | "Passwords don't match."                                         |
+| Password too short                                                     | "Use at least 8 characters."                                     |
+| Any other auth error                                                   | "Something went wrong. Try again in a moment."                   |
 
 Screens:
+
 - Sign up (title "Create your account"): fields "Full name", "Work email", "Password" (hint "At least 8 characters"); hidden `next` from the search params; button "Create account"; link "Already have an account? Sign in" that keeps `next`. `signUp` calls `auth.signUp({ email, password, options: { emailRedirectTo: siteUrl + safeRedirectPath(next, siteUrl), data: { full_name } } })` and, on success, replaces the form with the success text.
 - Sign in (title "Sign in"): "Email", "Password", link "Forgot password?", button "Sign in"; on success redirect to `safeRedirectPath(next, siteUrl)`.
 - Google button ("Continue with Google", on both screens, only when `clientEnv.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`): `signInWithOAuth({ provider: "google", options: { redirectTo: \`${location.origin}/auth/callback?next=${encodeURIComponent(next)}\` } })`.
@@ -844,21 +980,46 @@ Screens:
 
 ```ts
 it("trims the name and lower-cases the email", () => {
-  expect(signUpSchema.parse({ fullName: "  Ana ", email: " Ana@Salon.COM ", password: "longenough" })).toMatchObject({
+  expect(
+    signUpSchema.parse({
+      fullName: "  Ana ",
+      email: " Ana@Salon.COM ",
+      password: "longenough",
+    }),
+  ).toMatchObject({
     fullName: "Ana",
     email: "ana@salon.com",
   });
 });
 it("enforces password length", () => {
-  expect(signUpSchema.safeParse({ fullName: "Ana", email: "a@b.co", password: "1234567" }).success).toBe(false);
-  expect(signUpSchema.safeParse({ fullName: "Ana", email: "a@b.co", password: "x".repeat(73) }).success).toBe(false);
+  expect(
+    signUpSchema.safeParse({
+      fullName: "Ana",
+      email: "a@b.co",
+      password: "1234567",
+    }).success,
+  ).toBe(false);
+  expect(
+    signUpSchema.safeParse({
+      fullName: "Ana",
+      email: "a@b.co",
+      password: "x".repeat(73),
+    }).success,
+  ).toBe(false);
 });
 it("flags mismatched passwords on the confirm field", () => {
-  const r = newPasswordSchema.safeParse({ password: "Password123!", confirmPassword: "Password124!" });
+  const r = newPasswordSchema.safeParse({
+    password: "Password123!",
+    confirmPassword: "Password124!",
+  });
   expect(r.success).toBe(false);
-  expect(r.error?.issues[0]).toMatchObject({ path: ["confirmPassword"], message: "Passwords don't match." });
+  expect(r.error?.issues[0]).toMatchObject({
+    path: ["confirmPassword"],
+    message: "Passwords don't match.",
+  });
 });
 ```
+
 Run: `npm test` Expected: FAIL.
 
 - [ ] **Step 2: Implement `src/features/auth/schemas.ts`, see it pass**
@@ -883,7 +1044,9 @@ test("sign-in explains a wrong password, then works", async ({ page }) => {
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Password", { exact: true }).fill("WrongPassword1");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByText("That email and password don't match.")).toBeVisible();
+  await expect(
+    page.getByText("That email and password don't match."),
+  ).toBeVisible();
   await signIn(page, user);
   await expect(page).toHaveURL("/onboarding");
 });
@@ -892,7 +1055,11 @@ test("a user resets a forgotten password", async ({ page }) => {
   await page.goto("/forgot-password");
   await page.getByLabel("Email").fill(user.email);
   await page.getByRole("button", { name: "Send reset link" }).click();
-  await expect(page.getByText("If there's an account for that email, we've sent a reset link.")).toBeVisible();
+  await expect(
+    page.getByText(
+      "If there's an account for that email, we've sent a reset link.",
+    ),
+  ).toBeVisible();
   await page.goto(await latestEmailLink(user.email, "/auth/confirm"));
   await expect(page).toHaveURL("/account/update-password");
   await page.getByLabel("New password").fill("NewPassword456!");
@@ -904,6 +1071,7 @@ test("a user resets a forgotten password", async ({ page }) => {
   await expect(page).toHaveURL("/onboarding");
 });
 ```
+
 Run: `npm run test:e2e -- tests/e2e/auth.spec.ts` Expected: FAIL, `/sign-up` returns 404. (`/onboarding` itself arrives in Task 8; these tests only check the URL.)
 
 - [ ] **Step 4: Implement the actions, screens and Google button**
@@ -924,10 +1092,12 @@ git commit -m "feat(auth): sign-up, sign-in and password reset screens"
 ### Task 8: Onboarding: create the workspace
 
 **Files:**
+
 - Create: `src/features/workspaces/slug.ts`, `src/features/workspaces/schemas.ts`, `src/features/workspaces/records.ts`, `src/features/workspaces/actions.ts`, `src/lib/locale-options.ts`, `src/components/forms/searchable-select.tsx`, `src/app/onboarding/page.tsx`, `src/app/onboarding/workspace-form.tsx`, `src/app/w/[slug]/page.tsx`, `tests/unit/slug.test.ts`, `tests/unit/workspace-schemas.test.ts`, `tests/integration/workspace-records.test.ts`
 - Modify: `src/features/workspaces/queries.ts`, `src/lib/auth/session.ts`, `tests/e2e/auth.spec.ts`
 
 **Interfaces:**
+
 - Consumes: Tasks 2, 3 and 6
 - Produces:
   - `slugify(name: string): string`; `withRandomSuffix(slug: string): string` (appends `-` and 4 characters from `[a-z0-9]`, trimming the base so the result is at most 48 characters)
@@ -956,12 +1126,17 @@ it.each([
   ["Hi", "workspace"],
   ["A".repeat(60), "a".repeat(40)],
   ["abcdefghi ".repeat(6), "abcdefghi-abcdefghi-abcdefghi-abcdefghi"],
-])("slugify(%j) gives %s", (name, expected) => expect(slugify(name)).toBe(expected));
+])("slugify(%j) gives %s", (name, expected) =>
+  expect(slugify(name)).toBe(expected),
+);
 it("adds a 4-character suffix and stays within 48 characters", () => {
-  expect(withRandomSuffix("bloom-hair-beauty")).toMatch(/^bloom-hair-beauty-[a-z0-9]{4}$/);
+  expect(withRandomSuffix("bloom-hair-beauty")).toMatch(
+    /^bloom-hair-beauty-[a-z0-9]{4}$/,
+  );
   expect(withRandomSuffix("a".repeat(48)).length).toBeLessThanOrEqual(48);
 });
 ```
+
 ```ts
 it.each([
   ["", { ok: true, value: null }],
@@ -971,14 +1146,31 @@ it.each([
   ["ftp://bloom.com", { ok: false }],
   ["javascript:alert(1)", { ok: false }],
   ["localhost", { ok: false }],
-])("parseWebsite(%j)", (input, expected) => expect(parseWebsite(input)).toEqual(expected));
+])("parseWebsite(%j)", (input, expected) =>
+  expect(parseWebsite(input)).toEqual(expected),
+);
 it("normalises valid details", () => {
-  expect(workspaceDetailsSchema.parse({ name: " Bloom ", website: "", timezone: "America/Chicago", currency: "usd" })).toEqual({
-    name: "Bloom", website: null, timezone: "America/Chicago", currency: "USD",
+  expect(
+    workspaceDetailsSchema.parse({
+      name: " Bloom ",
+      website: "",
+      timezone: "America/Chicago",
+      currency: "usd",
+    }),
+  ).toEqual({
+    name: "Bloom",
+    website: null,
+    timezone: "America/Chicago",
+    currency: "USD",
   });
 });
 it("rejects bad details with the exact messages", () => {
-  const r = workspaceDetailsSchema.safeParse({ name: "B", website: "nope", timezone: "Mars/Olympus", currency: "ABC" });
+  const r = workspaceDetailsSchema.safeParse({
+    name: "B",
+    website: "nope",
+    timezone: "Mars/Olympus",
+    currency: "ABC",
+  });
   expect(z.flattenError(r.error!).fieldErrors).toEqual({
     name: ["Use 2 to 80 characters."],
     website: ["Enter a full website address, like bloomsalon.com."],
@@ -987,6 +1179,7 @@ it("rejects bad details with the exact messages", () => {
   });
 });
 ```
+
 Run: `npm test` Expected: FAIL.
 
 - [ ] **Step 2: Implement `slug.ts`, `schemas.ts` and `locale-options.ts`, see them pass**
@@ -1015,6 +1208,7 @@ Run: `npm run test:e2e -- tests/e2e/auth.spec.ts` Expected: PASS.
 - [ ] **Step 7: Verify and commit**
 
 Run: `npm test`, `npm run test:integration`, `npm run lint`, `npm run typecheck`. Expected: all pass.
+
 ```bash
 git add -A
 git commit -m "feat(workspaces): onboarding creates a workspace with a unique slug"
@@ -1025,10 +1219,12 @@ git commit -m "feat(workspaces): onboarding creates a workspace with a unique sl
 ### Task 9: App shell and workspace switching
 
 **Files:**
+
 - Create: `src/app/w/[slug]/layout.tsx`, `src/components/app-shell/app-sidebar.tsx`, `src/components/app-shell/sidebar-nav.tsx`, `src/components/app-shell/workspace-switcher.tsx`, `src/components/app-shell/user-menu.tsx`, `src/components/app-shell/nav-items.ts`, `src/lib/auth/home.ts`, `src/features/account/queries.ts`, `src/features/team/queries.ts`, `tests/unit/home.test.ts`, `tests/unit/nav-items.test.ts`, `tests/e2e/shell.spec.ts`
 - Modify: `src/app/w/[slug]/page.tsx`, `src/app/dashboard/page.tsx`, `src/proxy.ts`
 
 **Interfaces:**
+
 - Consumes: `requireMembership`, `Membership`, `listMyWorkspaces` (Tasks 6 and 8); `profiles`, `memberships`
 - Produces:
   - `LAST_WORKSPACE_COOKIE = "fd_last_workspace"` and `pickHomeWorkspace(workspaces: { slug: string }[], lastSlug: string | undefined): string | null` in `src/lib/auth/home.ts`
@@ -1040,21 +1236,32 @@ git commit -m "feat(workspaces): onboarding creates a workspace with a unique sl
 
 ```ts
 const list = [{ slug: "north" }, { slug: "south" }];
-it("returns the last workspace when the user still belongs to it", () => expect(pickHomeWorkspace(list, "south")).toBe("south"));
+it("returns the last workspace when the user still belongs to it", () =>
+  expect(pickHomeWorkspace(list, "south")).toBe("south"));
 it("falls back to the first workspace", () => {
   expect(pickHomeWorkspace(list, "gone")).toBe("north");
   expect(pickHomeWorkspace(list, undefined)).toBe("north");
 });
-it("returns null when there are no workspaces", () => expect(pickHomeWorkspace([], "south")).toBeNull());
+it("returns null when there are no workspaces", () =>
+  expect(pickHomeWorkspace([], "south")).toBeNull());
 ```
+
 ```ts
 it("hides Settings from staff", () => {
-  expect(navItems("bloom", "staff").map((i) => i.label)).toEqual(["Overview", "Team"]);
+  expect(navItems("bloom", "staff").map((i) => i.label)).toEqual([
+    "Overview",
+    "Team",
+  ]);
 });
 it("shows Settings to owners and admins", () => {
-  expect(navItems("bloom", "admin").map((i) => i.href)).toEqual(["/w/bloom", "/w/bloom/team", "/w/bloom/settings"]);
+  expect(navItems("bloom", "admin").map((i) => i.href)).toEqual([
+    "/w/bloom",
+    "/w/bloom/team",
+    "/w/bloom/settings",
+  ]);
 });
 ```
+
 Run: `npm test` Expected: FAIL.
 
 - [ ] **Step 2: Implement `home.ts` and `nav-items.ts`, see them pass**
@@ -1062,6 +1269,7 @@ Run: `npm test` Expected: FAIL.
 - [ ] **Step 3: Build the shell**
 
 `layout.tsx` calls `requireMembership(slug)` and renders the shadcn `SidebarProvider`. `AppSidebar` has `WorkspaceSwitcher` in the header, `SidebarNav` in the content (a client component that marks the active item with `usePathname`), and `UserMenu` in the footer. `SidebarInset` has a top bar with `SidebarTrigger` and `ThemeToggle`.
+
 - `WorkspaceSwitcher`: a dropdown listing `listMyWorkspaces` (name plus a role badge, a check on the current one) and "New workspace", which goes to `/onboarding`.
 - `UserMenu`: avatar initials, name and email; items "Light", "Dark", "System"; "Sign out" as a form that POSTs to `/auth/sign-out`.
 - Overview `/w/[slug]`: h1 "Welcome to {name}". A "Business details" card shows the website (or "No website yet"), time zone and currency, plus an "Edit details" link to settings for owners and admins. A "Team" card shows "{n} members" (or "1 member") and a "Manage team" link.
@@ -1081,6 +1289,7 @@ Run: `npm run test:e2e -- tests/e2e/shell.spec.ts` Expected: PASS.
 - [ ] **Step 6: Verify and commit**
 
 Run: `npm test`, `npm run lint`, `npm run typecheck`. Expected: all pass.
+
 ```bash
 git add -A
 git commit -m "feat(app): sidebar shell, workspace switcher and overview"
@@ -1091,10 +1300,12 @@ git commit -m "feat(app): sidebar shell, workspace switcher and overview"
 ### Task 10: Workspace settings
 
 **Files:**
+
 - Create: `src/features/workspaces/permissions.ts`, `src/app/w/[slug]/settings/page.tsx`, `src/app/w/[slug]/settings/business-details-form.tsx`, `src/app/w/[slug]/settings/delete-workspace-dialog.tsx`, `tests/unit/permissions.test.ts`, `tests/integration/workspace-settings.test.ts`, `tests/e2e/settings.spec.ts`
 - Modify: `src/features/workspaces/records.ts`, `src/features/workspaces/actions.ts`, `src/components/app-shell/nav-items.ts`
 
 **Interfaces:**
+
 - Consumes: `requireMembership`, `workspaceDetailsSchema`, `SearchableSelect`, `withRls` (earlier tasks)
 - Produces:
   - In `permissions.ts`: `canEditWorkspace(role: WorkspaceRole): boolean`, `canDeleteWorkspace(role)`, `canManageTeam(role)`, `canChangeRole(actor: WorkspaceRole, target: WorkspaceRole, next: WorkspaceRole): boolean`, `canRemoveMember(actor: WorkspaceRole, target: WorkspaceRole, isSelf: boolean): boolean`. These mirror the Task 3 policies. They decide what the UI shows and let actions fail early; RLS still enforces. The last-owner rule lives only in the database (`last_owner`).
@@ -1106,21 +1317,47 @@ git commit -m "feat(app): sidebar shell, workspace switcher and overview"
 
 ```ts
 it("only owners and admins edit and manage the team; only owners delete", () => {
-  expect([canEditWorkspace("owner"), canEditWorkspace("admin"), canEditWorkspace("staff")]).toEqual([true, true, false]);
-  expect([canManageTeam("owner"), canManageTeam("admin"), canManageTeam("staff")]).toEqual([true, true, false]);
-  expect([canDeleteWorkspace("owner"), canDeleteWorkspace("admin"), canDeleteWorkspace("staff")]).toEqual([true, false, false]);
+  expect([
+    canEditWorkspace("owner"),
+    canEditWorkspace("admin"),
+    canEditWorkspace("staff"),
+  ]).toEqual([true, true, false]);
+  expect([
+    canManageTeam("owner"),
+    canManageTeam("admin"),
+    canManageTeam("staff"),
+  ]).toEqual([true, true, false]);
+  expect([
+    canDeleteWorkspace("owner"),
+    canDeleteWorkspace("admin"),
+    canDeleteWorkspace("staff"),
+  ]).toEqual([true, false, false]);
 });
 it.each([
-  ["owner", "staff", "admin", true], ["owner", "admin", "owner", true], ["owner", "owner", "admin", true],
-  ["admin", "staff", "admin", true], ["admin", "admin", "staff", true],
-  ["admin", "owner", "admin", false], ["admin", "staff", "owner", false], ["staff", "staff", "admin", false],
-] as const)("canChangeRole(%s changes %s to %s) is %s", (a, t, n, ok) => expect(canChangeRole(a, t, n)).toBe(ok));
+  ["owner", "staff", "admin", true],
+  ["owner", "admin", "owner", true],
+  ["owner", "owner", "admin", true],
+  ["admin", "staff", "admin", true],
+  ["admin", "admin", "staff", true],
+  ["admin", "owner", "admin", false],
+  ["admin", "staff", "owner", false],
+  ["staff", "staff", "admin", false],
+] as const)("canChangeRole(%s changes %s to %s) is %s", (a, t, n, ok) =>
+  expect(canChangeRole(a, t, n)).toBe(ok),
+);
 it.each([
-  ["staff", "staff", true, true], ["staff", "admin", false, false],
-  ["admin", "staff", false, true], ["admin", "admin", false, true], ["admin", "owner", false, false],
-  ["owner", "owner", false, true], ["owner", "admin", false, true],
-] as const)("canRemoveMember(%s removes %s, self=%s) is %s", (a, t, self, ok) => expect(canRemoveMember(a, t, self)).toBe(ok));
+  ["staff", "staff", true, true],
+  ["staff", "admin", false, false],
+  ["admin", "staff", false, true],
+  ["admin", "admin", false, true],
+  ["admin", "owner", false, false],
+  ["owner", "owner", false, true],
+  ["owner", "admin", false, true],
+] as const)("canRemoveMember(%s removes %s, self=%s) is %s", (a, t, self, ok) =>
+  expect(canRemoveMember(a, t, self)).toBe(ok),
+);
 ```
+
 Run: `npm test` Expected: FAIL.
 
 - [ ] **Step 2: Implement `permissions.ts`, see it pass; switch `navItems` to `canEditWorkspace`**
@@ -1142,7 +1379,7 @@ Run: `npm run test:integration -- tests/integration/workspace-settings.test.ts` 
 - [ ] **Step 6: Write and run `tests/e2e/settings.spec.ts`**
 
 - "an owner renames the workspace": change "Business name", click "Save changes", expect the "Saved." toast, reload, and expect the new name in the switcher.
-- "staff get a 404 on settings": `const res = await page.goto(\`/w/${slug}/settings\`)` and `expect(res?.status()).toBe(404)`.
+- "staff get a 404 on settings": `const res = await page.goto(\`/w/${slug}/settings\`)`and`expect(res?.status()).toBe(404)`.
 - "an owner deletes the workspace after typing its name": a wrong name shows "Type the workspace name exactly to confirm."; the right name ends at `/onboarding`.
 
 Run: `npm run test:e2e -- tests/e2e/settings.spec.ts` Expected: PASS.
@@ -1159,10 +1396,12 @@ git commit -m "feat(workspaces): settings for business details and workspace del
 ### Task 11: Team and invitations
 
 **Files:**
+
 - Create: `src/features/team/records.ts`, `src/features/team/actions.ts`, `src/features/team/messages.ts`, `src/app/w/[slug]/team/page.tsx`, `src/app/w/[slug]/team/members-table.tsx`, `src/app/w/[slug]/team/invite-dialog.tsx`, `src/app/w/[slug]/team/pending-invites.tsx`, `src/app/invite/[token]/page.tsx`, `src/app/invite/[token]/accept-form.tsx`, `tests/integration/team-records.test.ts`, `tests/e2e/team.spec.ts`
 - Modify: `src/features/team/queries.ts`
 
 **Interfaces:**
+
 - Consumes: `createInviteToken`, `inviteExpiresAt`, `inviteStatus`, `InviteStatus` (Task 4); permissions (Task 10); `getPgError` (Task 2); `requireMembership`, `getAuthClaims`, `getMembershipBySlug` (Tasks 6 and 8); `updateWorkspaceRecord` (Task 10)
 - Produces:
   - Queries: `listMembers(claims: AuthClaims, workspaceId: string): Promise<{ membershipId: string; userId: string; fullName: string; email: string; avatarUrl: string | null; role: WorkspaceRole; joinedAt: Date }[]>` (owners, then admins, then staff, then by name); `listPendingInvites(claims: AuthClaims, workspaceId: string): Promise<{ id: string; email: string; role: "admin" | "staff"; expiresAt: Date; status: InviteStatus }[]>` (not accepted and not revoked, expired ones included, newest first); `getInvitePreview(claims: AuthClaims | null, token: string): Promise<{ workspaceName: string; workspaceSlug: string; role: WorkspaceRole; email: string; inviterName: string; status: InviteStatus } | null>`
@@ -1177,20 +1416,21 @@ git commit -m "feat(workspaces): settings for business details and workspace del
 
 Exact copy:
 
-| Code or situation | Text |
-|---|---|
-| `already_member` | "That person is already in this workspace." |
-| `last_owner` | "A workspace needs at least one owner. Make someone else an owner first." |
-| `not_allowed` | "You don't have permission to do that." |
-| `invite_not_found` | "This invite link isn't valid." |
-| `invite_revoked` | "This invite was cancelled." |
-| `invite_used` | "This invite has already been used." |
-| `invite_expired` | "This invite has expired. Ask for a new one." |
-| `invite_email_mismatch` | "This invite was sent to {email}. Sign in with that email to accept it." |
-| Invite created | "Send this link to {email}. It works once and expires in 7 days." |
-| Link copied | "Link copied." |
+| Code or situation       | Text                                                                      |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `already_member`        | "That person is already in this workspace."                               |
+| `last_owner`            | "A workspace needs at least one owner. Make someone else an owner first." |
+| `not_allowed`           | "You don't have permission to do that."                                   |
+| `invite_not_found`      | "This invite link isn't valid."                                           |
+| `invite_revoked`        | "This invite was cancelled."                                              |
+| `invite_used`           | "This invite has already been used."                                      |
+| `invite_expired`        | "This invite has expired. Ask for a new one."                             |
+| `invite_email_mismatch` | "This invite was sent to {email}. Sign in with that email to accept it."  |
+| Invite created          | "Send this link to {email}. It works once and expires in 7 days."         |
+| Link copied             | "Link copied."                                                            |
 
 Screens:
+
 - `/w/[slug]/team`, visible to every member. Heading "Team". A members table with name and email, role, and joined date. The role is a select where `canChangeRole` allows and a badge otherwise. A row menu offers "Remove from workspace" when `canRemoveMember` allows, or "Leave workspace" on your own row. Confirm dialogs: "Remove {name}? They'll lose access right away." and "Leave {workspace}? You'll need a new invite to come back."
 - Invite (`canManageTeam`): the button "Invite teammate" opens a dialog with "Email" and "Role" (Staff by default, or Admin) and the button "Create invite link". The dialog then shows the created copy, a read-only input labelled "Invite link" holding `${siteUrl}/invite/${token}`, and a "Copy link" button. The token is shown only here; only its hash is stored.
 - Pending invites (`canManageTeam`): email, role, "Expires {date}" or "Expired", and a "Revoke" button.
@@ -1233,6 +1473,7 @@ Run: `npm run test:e2e -- tests/e2e/team.spec.ts` Expected: PASS.
 - [ ] **Step 5: Verify and commit**
 
 Run: `npm test`, `npm run test:integration`, `npm run lint`, `npm run typecheck`. Expected: all pass.
+
 ```bash
 git add -A
 git commit -m "feat(team): members, roles, invite links and accepting invites"
@@ -1243,10 +1484,12 @@ git commit -m "feat(team): members, roles, invite links and accepting invites"
 ### Task 12: CI, README and the first deployment
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 - Modify: `README.md` (replace the scaffold text), `.env.example`, `package.json` (add `"engines": { "node": ">=24" }`)
 
 **Interfaces:**
+
 - Consumes: every script from the earlier tasks
 - Produces: a CI workflow that runs on pushes to `main` and on pull requests; a public GitHub repository; a hosted Supabase project; a Vercel deployment
 
@@ -1292,6 +1535,7 @@ jobs:
 - [ ] **Step 2: Write the README**
 
 Sections:
+
 - "FrontDesk AI": one paragraph from spec section 1, plus "Status: milestone 1 of 12 (foundation)".
 - "Run it locally": needs Node 24 and Docker Desktop; then `npm ci`, `npm run db:start`, `npm run env:local`, `npm run dev`; local emails at `http://127.0.0.1:54324`.
 - "Tests": the four test commands.
@@ -1304,6 +1548,7 @@ Sections:
 ```bash
 npm run format:check && npm run lint && npm run typecheck && npm test && npm run db:reset && npm run test:integration && npm run build && npm run test:e2e
 ```
+
 Expected: every command passes.
 
 - [ ] **Step 4: Commit**
@@ -1316,20 +1561,24 @@ git commit -m "ci: GitHub Actions pipeline and setup README"
 - [ ] **Step 5: GitHub (Daksh creates the repo; push only after his go-ahead)**
 
 Daksh creates an empty public repository named `frontdesk-ai` on github.com (no README, licence or .gitignore). Then:
+
 ```bash
 git remote add origin <repo URL>
 git push -u origin main
 ```
+
 Expected: the CI run on GitHub passes.
 
 - [ ] **Step 6: Hosted Supabase (Daksh)**
 
 Create a project named `frontdesk-ai` in the East US (North Virginia) region. Under Authentication, URL Configuration: set the Site URL to the Vercel URL and add `<vercel URL>/**` to the redirect URLs. Paste the two email templates and their subjects. Then run, with his own login and database password:
+
 ```bash
 npx supabase login
 npx supabase link --project-ref <project ref>
 npx supabase db push
 ```
+
 Expected: `db push` applies every migration. Note: until custom SMTP arrives in M3, Supabase's built-in email only reaches the project's team members, so only Daksh's own address receives confirmation emails.
 
 - [ ] **Step 7: Vercel (Daksh)**

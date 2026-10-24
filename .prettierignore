@@ -1,0 +1,9 @@
+.next
+node_modules
+supabase/migrations/meta
+package-lock.json
+playwright-report
+test-results
+blob-report
+.superpowers
+next-env.d.ts

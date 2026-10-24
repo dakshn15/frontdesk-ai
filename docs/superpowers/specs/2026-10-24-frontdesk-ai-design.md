@@ -16,6 +16,7 @@ What makes it stand out (from competitor research): most chat tools answer quest
 ## 2. Goals, non-goals, anti-goals
 
 Goals
+
 1. Answers you can trust: facts come from the business's own data, every answer can show its source, and the bot says it isn't sure instead of guessing.
 2. Real booking inside the chat: availability per staff member and service, booking, rescheduling and cancelling, with double bookings impossible.
 3. Honest handoff: the bot always says it's an AI, and a human can take over the conversation live.
@@ -25,6 +26,7 @@ Goals
 7. Production quality a client can see: tests, CI, monitoring, docs, a stable live demo.
 
 Non-goals for version 1 (listed as roadmap in the case study)
+
 - Phone and voice calls
 - WhatsApp, Instagram, Messenger and SMS chat channels
 - Two-way Google Calendar or Outlook sync (version 1 gives each staff member a read-only calendar feed instead)
@@ -34,6 +36,7 @@ Non-goals for version 1 (listed as roadmap in the case study)
 - Any business vertical with protected health data (no clinics in the demo)
 
 Anti-goals (things that would make it a failure even if it technically works)
+
 - The bot states a price, time, policy or staff detail that isn't in the business's data
 - Two customers can book the same staff member at the same time
 - The bot claims or implies it's a human
@@ -43,23 +46,26 @@ Anti-goals (things that would make it a failure even if it technically works)
 
 ## 3. Who uses it
 
-| Role | What they do |
-|---|---|
-| Visitor / customer | Chats on the business's website, gets answers, books, leaves details. Manages a booking through a secure link in the confirmation email. No account. |
-| Owner | Creates the workspace, sets up services, staff, hours, policies and knowledge, uses the test lab, corrects answers, sees analytics, manages billing and team. |
-| Admin | Same as owner except billing and deleting the workspace. |
-| Staff | Sees own calendar and the inbox, gets handoff alerts, takes over conversations. A staff login is linked to that person's staff profile; a staff profile doesn't need a login. |
-| Platform admin (Daksh) | Sees all workspaces, plans, usage and AI cost. Read-only. Set by an email allowlist in the server environment, never by a setting inside the app. |
+| Role                   | What they do                                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visitor / customer     | Chats on the business's website, gets answers, books, leaves details. Manages a booking through a secure link in the confirmation email. No account.                          |
+| Owner                  | Creates the workspace, sets up services, staff, hours, policies and knowledge, uses the test lab, corrects answers, sees analytics, manages billing and team.                 |
+| Admin                  | Same as owner except billing and deleting the workspace.                                                                                                                      |
+| Staff                  | Sees own calendar and the inbox, gets handoff alerts, takes over conversations. A staff login is linked to that person's staff profile; a staff profile doesn't need a login. |
+| Platform admin (Daksh) | Sees all workspaces, plans, usage and AI cost. Read-only. Set by an email allowlist in the server environment, never by a setting inside the app.                             |
 
 ## 4. Features (version 1)
 
 ### 4.1 Workspace setup
+
 - Sign up with email and password or Google (Supabase Auth). Email verification.
 - Onboarding wizard: business name, website, timezone, currency, opening hours, then services, staff, and knowledge. The wizard can be skipped and resumed.
 - Team: invite by email with a role; invitations expire after 7 days.
 
 ### 4.2 Business facts (structured, the source of truth)
+
 Everything the bot must never guess lives in tables, not documents:
+
 - Services: name, description, duration, price (or "from" price), buffer time after, category, which staff can perform it, bookable online yes or no.
 - Staff: name, bio, photo, services, weekly working hours (per day, with breaks), time off.
 - Business hours and closed days (holidays).
@@ -67,14 +73,17 @@ Everything the bot must never guess lives in tables, not documents:
 - Verified answers: question and answer pairs the owner has written or corrected. They always win over document search.
 
 ### 4.3 Knowledge (documents)
+
 - Sources: upload PDF, DOCX, TXT or Markdown, add a web page URL, or crawl a site's sitemap up to a page limit set by the plan, or paste text.
 - Background pipeline (Inngest): fetch, extract text, split into chunks with headings kept, create embeddings, store with a full-text index. Shows status per source (queued, processing, ready, failed with reason). Re-sync button.
 - Hybrid search: vector similarity (pgvector, HNSW index) and Postgres full-text search, merged with reciprocal rank fusion, filtered to the workspace.
 
 ### 4.4 The AI receptionist (agent)
+
 Built on Vercel AI SDK 7 with streaming and tool calling. Provider is OpenAI or Google Gemini, set per workspace (default from platform settings). If the chosen provider errors or times out, the request is retried once on the other provider and the switch is logged, so one provider's outage doesn't take the receptionist down. Replies are in the visitor's language; the dashboard is English only.
 
 Tools the model can call (all scoped to the workspace on the server):
+
 - get_services, get_staff, get_hours, get_policies: exact facts from tables
 - search_knowledge: hybrid search over documents, returns passages with source IDs
 - find_verified_answer: checks owner-written answers first
@@ -85,6 +94,7 @@ Tools the model can call (all scoped to the workspace on the server):
 - handoff_to_human: marks the conversation for a person and alerts staff
 
 Answer rules (system prompt plus server checks):
+
 - Prices, durations, hours, staff and policies only from tool results. If a tool returns nothing, say so and offer handoff.
 - General answers only from verified answers or retrieved passages, with the source shown under the message.
 - If confidence is low (no verified answer and weak retrieval), say it isn't sure and offer handoff or lead capture.
@@ -94,6 +104,7 @@ Answer rules (system prompt plus server checks):
 - Keep replies short and friendly, in the business's chosen tone.
 
 ### 4.5 Booking engine
+
 - Availability = staff working hours minus breaks, time off, closed days and existing bookings (plus buffers), cut into slots at a set step (default 15 minutes), respecting a minimum notice and a maximum days ahead.
 - All times stored in UTC and shown in the business timezone. The widget also shows the visitor's local time if different.
 - Double booking is impossible: bookings use a Postgres exclusion constraint (btree_gist) on staff and the occupied time range (start to end plus the buffer) for confirmed bookings, so the database rejects any overlap, even with two requests at the same moment. A rejected booking returns a friendly "that slot was just taken" with new options.
@@ -106,6 +117,7 @@ Answer rules (system prompt plus server checks):
 - Owners and staff can create, move and cancel bookings in the dashboard calendar.
 
 ### 4.6 Chat widget
+
 - One script tag: `<script src="https://<app>/embed.js" data-workspace="..." async></script>`. The script is small (target under 15 KB gzipped) and opens an iframe, so the host site's CSS can't break it.
 - Customisable: assistant name, colour, greeting, suggested questions, position, avatar.
 - Streaming replies, source chips under answers, booking cards with a slot picker, lead form, handoff state ("A team member will reply here"), and transcript stays after page reloads for the session.
@@ -113,6 +125,7 @@ Answer rules (system prompt plus server checks):
 - Allowed domains per workspace, so the widget only loads on the business's own sites. Enforced with a Content Security Policy (frame-ancestors) on the iframe page and an origin check on the chat API.
 
 ### 4.7 Inbox and live takeover
+
 - Conversation list with status: AI handling, needs human, human handling, resolved. Filters and search.
 - Live updates in the dashboard through Supabase Realtime.
 - Take over: the AI stops replying, staff messages appear in the visitor's widget, staff can hand back to the AI. The widget picks up staff messages by checking every few seconds, and only while a person is handling the chat, so visitors never need an account or a database key.
@@ -121,24 +134,28 @@ Answer rules (system prompt plus server checks):
 - Conversation detail shows each tool the AI used and the sources behind every answer.
 
 ### 4.8 Test lab
+
 - Playground chat that behaves exactly like the live widget, with a side panel showing tools called, passages found, the verified answer used, model, tokens, cost and response time. Booking, lead and email tools run as dry runs here: they show what would happen, but nothing is saved or sent.
 - "Fix this answer": turns a wrong or weak reply into a verified answer in one step.
 - Saved test questions with the expected behaviour. Checks are simple and explainable: must use a given tool, must or must not contain given text, must say it isn't sure, must hand off. An optional AI grader compares the meaning of the answer with an expected answer. Run all tests in one click and see pass or fail. Results are kept so owners can see quality over time.
 - Unanswered and low-confidence questions from real chats can be added to the test set.
 
 ### 4.9 Analytics
+
 - Conversations, bookings made by the AI, leads captured, handoff rate, resolution without a human
 - Top topics and the list of unanswered or low-confidence questions. When a conversation goes quiet, a background job tags it with a topic from a fixed list and an outcome (booked, lead, handed off, answered, unanswered).
 - AI usage and cost per day, by provider
 - Date range filter; charts with Recharts
 
 ### 4.10 Billing (Stripe)
+
 - Plans: Trial (14 days), Starter and Pro, each with limits on monthly conversations, knowledge size and team seats. Prices are placeholders shown as a demo, in Stripe test mode.
 - Stripe Checkout to subscribe, Customer Portal to change or cancel, webhooks to keep plan status in sync (signature-checked and idempotent, the same approach as WayPoint).
 - Limits enforced on the server. At the limit, the widget offers lead capture and handoff instead of AI replies, and the owner gets an email.
 - When a trial ends without a plan, the widget switches to the same lead-capture mode and the dashboard asks the owner to choose a plan. Nothing is deleted.
 
 ### 4.11 Platform admin
+
 - Workspaces list with plan, status, usage and AI cost, and a usage chart. Read-only.
 
 ## 5. Architecture
