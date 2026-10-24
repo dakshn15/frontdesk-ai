@@ -1,9 +1,14 @@
 import "server-only";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { type AuthClaims, withRls } from "@/db";
 import { getPgError, PG_UNIQUE_VIOLATION } from "@/db/errors";
+import { auditLog, workspaces } from "@/db/schema";
 import type { WorkspaceDetails } from "./schemas";
 import { slugify, withRandomSuffix } from "./slug";
+
+export type RecordResult = "ok" | "not_allowed";
+
+const DETAIL_FIELDS = ["name", "website", "timezone", "currency"] as const;
 
 // The plain slug first, then up to three suffixed ones.
 const MAX_ATTEMPTS = 4;
@@ -29,4 +34,57 @@ export async function createWorkspaceRecord(
     }
   }
   throw new Error(`No free workspace URL for "${base}"`);
+}
+
+/** Saves new business details. Row level security decides who may; nothing is logged if refused. */
+export async function updateWorkspaceRecord(
+  claims: AuthClaims,
+  workspaceId: string,
+  input: WorkspaceDetails,
+): Promise<RecordResult> {
+  return withRls(claims, async (tx) => {
+    const [before] = await tx
+      .select({
+        name: workspaces.name,
+        website: workspaces.website,
+        timezone: workspaces.timezone,
+        currency: workspaces.currency,
+      })
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId));
+    if (!before) return "not_allowed";
+
+    const updated = await tx
+      .update(workspaces)
+      .set(input)
+      .where(eq(workspaces.id, workspaceId))
+      .returning({ id: workspaces.id });
+    if (updated.length === 0) return "not_allowed";
+
+    const changed = DETAIL_FIELDS.filter(
+      (field) => before[field] !== input[field],
+    );
+    await tx.insert(auditLog).values({
+      workspaceId,
+      actorId: claims.sub,
+      action: "workspace.updated",
+      targetType: "workspace",
+      targetId: workspaceId,
+      metadata: { changed },
+    });
+    return "ok";
+  });
+}
+
+export async function deleteWorkspaceRecord(
+  claims: AuthClaims,
+  workspaceId: string,
+): Promise<RecordResult> {
+  const deleted = await withRls(claims, (tx) =>
+    tx
+      .delete(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .returning({ id: workspaces.id }),
+  );
+  return deleted.length > 0 ? "ok" : "not_allowed";
 }

@@ -5,6 +5,7 @@ import {
   Users,
 } from "lucide-react";
 import type { WorkspaceRole } from "@/db/schema/enums";
+import { canEditWorkspace } from "@/features/workspaces/permissions";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon };
 
@@ -14,7 +15,7 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     { label: "Overview", href: base, icon: LayoutDashboard },
     { label: "Team", href: `${base}/team`, icon: Users },
   ];
-  if (role === "owner" || role === "admin") {
+  if (canEditWorkspace(role)) {
     items.push({ label: "Settings", href: `${base}/settings`, icon: Settings });
   }
   return items;
