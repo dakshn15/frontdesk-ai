@@ -16,6 +16,15 @@ test("a new owner signs up and confirms their email", async ({ page }) => {
 
   await page.goto(await latestEmailLink(email, "/auth/confirm"));
   await expect(page).toHaveURL("/onboarding");
+
+  const name = `Bloom Hair & Beauty ${Date.now()}`;
+  await page.getByLabel("Business name").fill(name);
+  await page.getByLabel("Time zone").click();
+  await page.getByPlaceholder("Search").fill("Chicago");
+  await page.getByRole("option", { name: "America/Chicago" }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page).toHaveURL(/\/w\/bloom-hair-beauty-\d+$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(name);
 });
 
 test("sign-up keeps what you typed when a field is invalid", async ({

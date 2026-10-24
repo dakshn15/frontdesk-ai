@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { zodFieldErrors } from "@/lib/validation";
 import { getServerEnv } from "@/env/server";
 import { fail, type FormState, ok } from "@/lib/action-result";
 import { safeRedirectPath } from "@/lib/auth/redirect";
@@ -17,10 +18,6 @@ import {
 const TRY_AGAIN = "Something went wrong. Try again in a moment.";
 const CHECK_FIELDS = "Check the highlighted fields.";
 
-function fieldErrors(error: z.ZodError): Record<string, string[]> {
-  return z.flattenError(error).fieldErrors as Record<string, string[]>;
-}
-
 /** Where confirmation emails send people back to: a path on this site with no query string. */
 function emailRedirect(next: string | undefined): string {
   const siteUrl = getServerEnv().NEXT_PUBLIC_SITE_URL;
@@ -33,7 +30,7 @@ export async function signUp(
   formData: FormData,
 ): Promise<FormState> {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(CHECK_FIELDS, fieldErrors(parsed.error));
+  if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
   const { fullName, email, password, next } = parsed.data;
 
   const supabase = await createSupabaseServerClient();
@@ -58,7 +55,7 @@ export async function signIn(
   formData: FormData,
 ): Promise<FormState> {
   const parsed = signInSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(CHECK_FIELDS, fieldErrors(parsed.error));
+  if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
   const { email, password, next } = parsed.data;
 
   const supabase = await createSupabaseServerClient();
@@ -83,7 +80,7 @@ export async function resendConfirmation(
   const parsed = emailOnlySchema
     .extend({ next: z.string().optional() })
     .safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(CHECK_FIELDS, fieldErrors(parsed.error));
+  if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resend({
@@ -100,7 +97,7 @@ export async function requestPasswordReset(
   formData: FormData,
 ): Promise<FormState> {
   const parsed = emailOnlySchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(CHECK_FIELDS, fieldErrors(parsed.error));
+  if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
 
   const supabase = await createSupabaseServerClient();
   // The result is ignored on purpose: the reply is the same whether or not the account exists.
@@ -115,7 +112,7 @@ export async function updatePassword(
   formData: FormData,
 ): Promise<FormState> {
   const parsed = newPasswordSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(CHECK_FIELDS, fieldErrors(parsed.error));
+  if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({
