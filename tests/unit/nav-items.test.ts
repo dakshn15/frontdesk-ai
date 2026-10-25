@@ -21,6 +21,7 @@ describe("navItems", () => {
         "Opening hours",
         "Policies",
         "Answers",
+        "Knowledge",
         "Team",
         "Settings",
       ]);
@@ -32,6 +33,7 @@ describe("navItems", () => {
         "/w/bloom/hours",
         "/w/bloom/policies",
         "/w/bloom/answers",
+        "/w/bloom/knowledge",
         "/w/bloom/team",
         "/w/bloom/settings",
       ]);

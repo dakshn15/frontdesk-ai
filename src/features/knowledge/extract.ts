@@ -7,8 +7,6 @@ const UNSUPPORTED = "Upload a PDF, Word, text or Markdown file.";
 const UNREADABLE = "We couldn't read that file.";
 const EMPTY = "That file has no text in it.";
 
-export const ACCEPTED_FILES = ".pdf,.docx,.txt,.md,.markdown";
-
 function normalize(text: string): string {
   return text
     .replace(/\r\n?/g, "\n")
