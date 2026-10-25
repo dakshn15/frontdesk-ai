@@ -8,19 +8,26 @@ import { icsCalendar } from "@/lib/ics";
 import { createSecretToken } from "@/lib/secret-token";
 import { sendEmail } from "./mailer";
 
-export type BookingEmailKind = "confirmed" | "rescheduled" | "cancelled";
+export type BookingEmailKind =
+  "confirmed" | "rescheduled" | "cancelled" | "reminder";
 
 const SUBJECT: Record<BookingEmailKind, string> = {
   confirmed: "is booked",
   rescheduled: "has moved",
   cancelled: "is cancelled",
+  reminder: "is coming up",
 };
 
 const INTRO: Record<BookingEmailKind, string> = {
   confirmed: "You're booked in.",
   rescheduled: "Your appointment has a new time.",
   cancelled: "Your appointment has been cancelled.",
+  reminder: "A reminder of your appointment.",
 };
+
+// Reminders carry no new link, so the one in the booking email keeps working.
+const REMINDER_NOTE =
+  "To cancel or change it, use the link in your booking email.";
 
 const escapeHtml = (value: string) =>
   value
@@ -45,7 +52,9 @@ export function bookingEmailContent(
   const what = `${details.serviceName} with ${details.staffName}`;
   const manage = details.manageUrl
     ? `Need to cancel or change it? ${details.manageUrl}`
-    : null;
+    : kind === "reminder"
+      ? REMINDER_NOTE
+      : null;
   const text = [
     `Hi ${details.customerName},`,
     INTRO[kind],
@@ -63,7 +72,9 @@ export function bookingEmailContent(
 ${
   details.manageUrl
     ? `<p>Need to cancel or change it? <a href="${escapeHtml(details.manageUrl)}">Manage your appointment</a></p>`
-    : ""
+    : kind === "reminder"
+      ? `<p>${REMINDER_NOTE}</p>`
+      : ""
 }
 <p>${escapeHtml(details.business)}</p>
 </body></html>`;
@@ -114,10 +125,10 @@ export async function sendBookingEmail(input: {
     .where(eq(bookings.id, input.bookingId));
   if (!booking) return;
 
-  const token =
-    input.kind === "cancelled"
-      ? undefined
-      : (input.manageToken ?? (await rotateManageToken(input.bookingId)));
+  const withLink = input.kind === "confirmed" || input.kind === "rescheduled";
+  const token = withLink
+    ? (input.manageToken ?? (await rotateManageToken(input.bookingId)))
+    : undefined;
   const siteUrl = getServerEnv().NEXT_PUBLIC_SITE_URL;
   const when = `${formatAppointment(booking.startsAt, booking.timeZone)} (${timeZoneLabel(booking.timeZone)})`;
   const content = bookingEmailContent(input.kind, {
@@ -151,12 +162,16 @@ export async function sendBookingEmail(input: {
     kind: `booking_${input.kind}`,
     to: booking.customerEmail,
     ...content,
-    attachments: [
-      {
-        filename: "appointment.ics",
-        content: ics,
-        contentType: "text/calendar; charset=utf-8",
-      },
-    ],
+    // The calendar already has the appointment by the time a reminder goes out.
+    attachments:
+      input.kind === "reminder"
+        ? undefined
+        : [
+            {
+              filename: "appointment.ics",
+              content: ics,
+              contentType: "text/calendar; charset=utf-8",
+            },
+          ],
   });
 }

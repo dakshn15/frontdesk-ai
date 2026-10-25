@@ -20,6 +20,8 @@ const serverSchema = z.object({
   DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(5),
   // Without a Resend key, emails are written to email_log as not sent.
   RESEND_API_KEY: z.string().min(1).optional(),
+  // Vercel Cron sends it as a bearer token; the reminder route refuses calls without it.
+  CRON_SECRET: z.string().min(16).optional(),
   EMAIL_FROM: z.string().min(3).default("FrontDesk AI <onboarding@resend.dev>"),
   // Without an OpenAI key, knowledge is stored without embeddings and searched by keyword.
   OPENAI_API_KEY: z.string().min(1).optional(),

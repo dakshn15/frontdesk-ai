@@ -103,6 +103,8 @@ export const bookings = pgTable(
     // The customer's manage link carries the token; only its hash is stored.
     manageTokenHash: text().notNull().unique(),
     cancelledAt: timestamp({ withTimezone: true }),
+    // Set when the day-before reminder goes out; cleared when the booking moves.
+    reminderSentAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

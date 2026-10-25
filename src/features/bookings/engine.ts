@@ -406,6 +406,7 @@ export async function moveBooking(
           booking.durationMinutes,
           booking.bufferMinutes,
         ),
+        reminderSentAt: null,
         updatedAt: sql`now()`,
       })
       .where(
