@@ -35,3 +35,22 @@ export const bookingSource = pgEnum("booking_source", [
   "dashboard",
   "customer",
 ]);
+
+// Where a knowledge source's text comes from.
+export const knowledgeKind = pgEnum("knowledge_kind", [
+  "file",
+  "url",
+  "sitemap",
+  "text",
+]);
+
+export type KnowledgeKind = (typeof knowledgeKind.enumValues)[number];
+
+export const knowledgeStatus = pgEnum("knowledge_status", [
+  "queued",
+  "processing",
+  "ready",
+  "failed",
+]);
+
+export type KnowledgeStatus = (typeof knowledgeStatus.enumValues)[number];

@@ -113,6 +113,20 @@
       "when": 1792929743043,
       "tag": "20261025120223_bookings_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792934858408,
+      "tag": "20261025132738_knowledge",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792934865136,
+      "tag": "20261025132745_knowledge_rules",
+      "breakpoints": true
     }
   ]
 }

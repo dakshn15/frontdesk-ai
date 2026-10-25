@@ -11,3 +11,4 @@ export * from "./hours";
 export * from "./policies";
 export * from "./answers";
 export * from "./bookings";
+export * from "./knowledge";
