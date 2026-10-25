@@ -1,7 +1,12 @@
 import {
+  Clock,
   LayoutDashboard,
   type LucideIcon,
+  MessageSquareText,
+  ScrollText,
   Settings,
+  Tags,
+  UserRound,
   Users,
 } from "lucide-react";
 import type { WorkspaceRole } from "@/db/schema/enums";
@@ -11,12 +16,17 @@ export type NavItem = { label: string; href: string; icon: LucideIcon };
 
 export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
   const base = `/w/${slug}`;
-  const items: NavItem[] = [
-    { label: "Overview", href: base, icon: LayoutDashboard },
-    { label: "Team", href: `${base}/team`, icon: Users },
+  const overview = { label: "Overview", href: base, icon: LayoutDashboard };
+  const team = { label: "Team", href: `${base}/team`, icon: Users };
+  if (!canEditWorkspace(role)) return [overview, team];
+  return [
+    overview,
+    { label: "Services", href: `${base}/services`, icon: Tags },
+    { label: "Staff", href: `${base}/staff`, icon: UserRound },
+    { label: "Opening hours", href: `${base}/hours`, icon: Clock },
+    { label: "Policies", href: `${base}/policies`, icon: ScrollText },
+    { label: "Answers", href: `${base}/answers`, icon: MessageSquareText },
+    team,
+    { label: "Settings", href: `${base}/settings`, icon: Settings },
   ];
-  if (canEditWorkspace(role)) {
-    items.push({ label: "Settings", href: `${base}/settings`, icon: Settings });
-  }
-  return items;
 }

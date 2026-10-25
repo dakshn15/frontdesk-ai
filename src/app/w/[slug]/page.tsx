@@ -8,8 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { setupChecklist } from "@/features/setup/checklist";
+import { getSetupFacts } from "@/features/setup/queries";
 import { countMembers } from "@/features/team/queries";
 import { requireMembership } from "@/lib/auth/session";
+import { SetupChecklist } from "./setup-checklist";
 
 export async function generateMetadata({
   params,
@@ -25,14 +28,23 @@ export default async function WorkspaceOverviewPage({
   const { slug } = await params;
   const { claims, membership } = await requireMembership(slug);
   const { workspace, role } = membership;
-  const members = await countMembers(claims, workspace.id);
   const canEdit = role === "owner" || role === "admin";
+  const [members, facts] = await Promise.all([
+    countMembers(claims, workspace.id),
+    // Staff don't see the checklist, so skip the query.
+    canEdit ? getSetupFacts(claims, workspace.id) : null,
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 md:py-10">
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         Welcome to {workspace.name}
       </h1>
+      {facts ? (
+        <div className="mt-8">
+          <SetupChecklist {...setupChecklist(workspace.slug, facts)} />
+        </div>
+      ) : null}
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
