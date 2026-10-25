@@ -63,15 +63,22 @@ export async function addTestMember(
 export async function createTestService(
   workspaceId: string,
   owner: TestUser,
-  opts: { name?: string; durationMinutes?: number } = {},
+  opts: {
+    name?: string;
+    durationMinutes?: number;
+    bufferMinutes?: number;
+    priceCents?: number | null;
+  } = {},
 ): Promise<{ id: string }> {
   const name = opts.name ?? `Service ${randomBytes(3).toString("hex")}`;
   const [row] = await asUser(
     owner.id,
     (tx) =>
       tx<{ id: string }[]>`
-        insert into public.services (workspace_id, name, duration_minutes)
-        values (${workspaceId}, ${name}, ${opts.durationMinutes ?? 60})
+        insert into public.services
+          (workspace_id, name, duration_minutes, buffer_minutes, price_cents)
+        values (${workspaceId}, ${name}, ${opts.durationMinutes ?? 60},
+          ${opts.bufferMinutes ?? 0}, ${opts.priceCents ?? null})
         returning id`,
   );
   return { id: row.id };
@@ -93,6 +100,41 @@ export async function createTestStaff(
         returning id`,
   );
   return { id: row.id };
+}
+
+/** Gives a staff member weekly hours as `owner`. Minutes since local midnight. */
+export async function setTestStaffHours(
+  workspaceId: string,
+  owner: TestUser,
+  staffId: string,
+  ranges: { weekday: number; startMinute: number; endMinute: number }[],
+): Promise<void> {
+  const rows = ranges.map((range) => ({
+    workspace_id: workspaceId,
+    staff_id: staffId,
+    weekday: range.weekday,
+    start_minute: range.startMinute,
+    end_minute: range.endMinute,
+  }));
+  await asUser(
+    owner.id,
+    (tx) => tx`insert into public.staff_hours ${tx(rows)}`,
+  );
+}
+
+/** Records that a staff member performs a service, as `owner`. */
+export async function linkTestStaffService(
+  workspaceId: string,
+  owner: TestUser,
+  staffId: string,
+  serviceId: string,
+): Promise<void> {
+  await asUser(
+    owner.id,
+    (tx) =>
+      tx`insert into public.staff_services (workspace_id, staff_id, service_id)
+        values (${workspaceId}, ${staffId}, ${serviceId})`,
+  );
 }
 
 /** Sets opening hours as `owner`, through row level security. Minutes since local midnight. */

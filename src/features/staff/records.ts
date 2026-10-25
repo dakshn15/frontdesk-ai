@@ -1,12 +1,18 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { type AuthClaims, type RlsTx, withRls } from "@/db";
 import {
   getPgError,
   PG_FOREIGN_KEY_VIOLATION,
   PG_UNIQUE_VIOLATION,
 } from "@/db/errors";
-import { staff, staffHours, staffServices, staffTimeOff } from "@/db/schema";
+import {
+  bookings,
+  staff,
+  staffHours,
+  staffServices,
+  staffTimeOff,
+} from "@/db/schema";
 import { type WeeklyHours, weekToRows } from "@/features/hours/weekly-hours";
 import { assertManager, Refused } from "@/features/workspaces/access";
 import type { StaffProfile } from "./schemas";
@@ -101,18 +107,32 @@ export async function updateStaffProfileRecord(
   }
 }
 
+/** Deletes a staff member unless they still have appointments coming up. */
 export async function deleteStaffRecord(
   claims: AuthClaims,
   workspaceId: string,
   staffId: string,
-): Promise<Allowed> {
-  const deleted = await withRls(claims, (tx) =>
-    tx
+): Promise<Allowed | "has_upcoming_bookings"> {
+  return withRls(claims, async (tx) => {
+    const [upcoming] = await tx
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.staffId, staffId),
+          eq(bookings.workspaceId, workspaceId),
+          eq(bookings.status, "confirmed"),
+          gt(bookings.startsAt, sql`now()`),
+        ),
+      )
+      .limit(1);
+    if (upcoming) return "has_upcoming_bookings";
+    const deleted = await tx
       .delete(staff)
       .where(and(eq(staff.id, staffId), eq(staff.workspaceId, workspaceId)))
-      .returning({ id: staff.id }),
-  );
-  return deleted.length > 0 ? "ok" : "not_allowed";
+      .returning({ id: staff.id });
+    return deleted.length > 0 ? "ok" : "not_allowed";
+  });
 }
 
 /** Replaces which services this person performs. */

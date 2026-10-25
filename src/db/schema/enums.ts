@@ -19,3 +19,19 @@ export const policyKind = pgEnum("policy_kind", [
 ]);
 
 export type PolicyKind = (typeof policyKind.enumValues)[number];
+
+// Only confirmed bookings block time.
+export const bookingStatus = pgEnum("booking_status", [
+  "confirmed",
+  "cancelled",
+  "completed",
+  "no_show",
+]);
+
+export type BookingStatus = (typeof bookingStatus.enumValues)[number];
+
+// Who made the booking: someone in the dashboard, or the customer (manage link, later the widget).
+export const bookingSource = pgEnum("booking_source", [
+  "dashboard",
+  "customer",
+]);

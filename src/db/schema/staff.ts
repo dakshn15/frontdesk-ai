@@ -33,6 +33,13 @@ export const staff = pgTable(
     bio: text().notNull().default(""),
     userId: uuid(),
     active: boolean().notNull().default(true),
+    // The secret in this person's calendar feed URL. Resetting it breaks the old URL.
+    calendarToken: text()
+      .notNull()
+      .unique()
+      .default(
+        sql`replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '')`,
+      ),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

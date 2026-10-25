@@ -191,6 +191,9 @@ export async function deleteStaff(
     context.workspace.id,
     context.staffId,
   );
+  if (result === "has_upcoming_bookings") {
+    return fail("Move or cancel their upcoming bookings first.");
+  }
   if (result !== "ok") return fail(NOT_ALLOWED);
   refresh(slug);
   redirect(`/w/${slug}/staff`);
