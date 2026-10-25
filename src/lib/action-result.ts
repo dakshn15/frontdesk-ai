@@ -23,3 +23,7 @@ export function fail(
 ): ActionResult<never> {
   return { ok: false, error, fieldErrors, code };
 }
+
+/** Shared form messages. */
+export const CHECK_FIELDS = "Check the highlighted fields.";
+export const NOT_ALLOWED = "You don't have permission to do that.";

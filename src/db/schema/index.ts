@@ -5,3 +5,4 @@ export * from "./workspaces";
 export * from "./memberships";
 export * from "./audit-log";
 export * from "./invitations";
+export * from "./services";

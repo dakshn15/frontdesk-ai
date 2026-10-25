@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPrice, parsePrice } from "@/lib/money";
+import { centsToInput, formatPrice, parsePrice } from "@/lib/money";
 
 describe("parsePrice", () => {
   it.each([
@@ -31,4 +31,15 @@ describe("formatPrice", () => {
       expect(formatPrice(cents, currency, isFrom)).toBe(expected);
     },
   );
+});
+
+describe("centsToInput", () => {
+  it.each([
+    [18000, "USD", "180"],
+    [4550, "USD", "45.50"],
+    [4500, "JPY", "4500"],
+    [null, "USD", ""],
+  ] as const)("centsToInput(%j, %s) is %j", (cents, currency, expected) => {
+    expect(centsToInput(cents, currency)).toBe(expected);
+  });
 });

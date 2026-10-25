@@ -55,3 +55,15 @@ export function formatPrice(
   }).format(cents / factor);
   return isFrom ? `From ${text}` : text;
 }
+
+/** A stored price as the edit form shows it: 18000 → "180", 4550 → "45.50", null → "". */
+export function centsToInput(cents: number | null, currency: string): string {
+  if (cents === null) return "";
+  const digits = currencyDigits(currency);
+  const factor = 10 ** digits;
+  const whole = Math.floor(cents / factor);
+  const fraction = cents % factor;
+  return fraction === 0
+    ? String(whole)
+    : `${whole}.${String(fraction).padStart(digits, "0")}`;
+}

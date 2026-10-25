@@ -43,6 +43,20 @@
       "when": 1792913108443,
       "tag": "20261025072508_column_update_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792921079367,
+      "tag": "20261025093759_services",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792921094340,
+      "tag": "20261025093814_services_rules",
+      "breakpoints": true
     }
   ]
 }

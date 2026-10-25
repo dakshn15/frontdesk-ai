@@ -59,6 +59,24 @@ export async function addTestMember(
   await testSql`insert into public.memberships (workspace_id, user_id, role) values (${workspaceId}, ${user.id}, ${role})`;
 }
 
+/** Creates a service as `owner`, through row level security. */
+export async function createTestService(
+  workspaceId: string,
+  owner: TestUser,
+  opts: { name?: string; durationMinutes?: number } = {},
+): Promise<{ id: string }> {
+  const name = opts.name ?? `Service ${randomBytes(3).toString("hex")}`;
+  const [row] = await asUser(
+    owner.id,
+    (tx) =>
+      tx<{ id: string }[]>`
+        insert into public.services (workspace_id, name, duration_minutes)
+        values (${workspaceId}, ${name}, ${opts.durationMinutes ?? 60})
+        returning id`,
+  );
+  return { id: row.id };
+}
+
 /** Creates an invite as `invitedBy`, through row level security, and returns its raw token. */
 export async function createTestInvite(
   workspaceId: string,

@@ -1,0 +1,901 @@
+{
+  "id": "8fa6d8a1-7a85-4d20-bfd7-d9339fae3d40",
+  "prevId": "6dc43d75-24d9-4b48-9d64-577b857a2151",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.profiles": {
+      "name": "profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "profiles_id_users_id_fk": {
+          "name": "profiles_id_users_id_fk",
+          "tableFrom": "profiles",
+          "columnsFrom": [
+            "id"
+          ],
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "profiles_select_self_or_teammates": {
+          "name": "profiles_select_self_or_teammates",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"profiles\".\"id\" = (select auth.uid()) or private.shares_workspace(\"profiles\".\"id\")"
+        },
+        "profiles_update_self": {
+          "name": "profiles_update_self",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"profiles\".\"id\" = (select auth.uid())",
+          "withCheck": "\"profiles\".\"id\" = (select auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.workspaces": {
+      "name": "workspaces",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "website": {
+          "name": "website",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workspaces_created_by_profiles_id_fk": {
+          "name": "workspaces_created_by_profiles_id_fk",
+          "tableFrom": "workspaces",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "tableTo": "profiles",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workspaces_slug_unique": {
+          "name": "workspaces_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "workspaces_select_members": {
+          "name": "workspaces_select_members",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.is_member(\"workspaces\".\"id\")"
+        },
+        "workspaces_update_managers": {
+          "name": "workspaces_update_managers",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"workspaces\".\"id\", array['owner','admin'])",
+          "withCheck": "private.has_role(\"workspaces\".\"id\", array['owner','admin'])"
+        },
+        "workspaces_delete_owners": {
+          "name": "workspaces_delete_owners",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"workspaces\".\"id\", array['owner'])"
+        }
+      },
+      "checkConstraints": {
+        "workspaces_name_length": {
+          "name": "workspaces_name_length",
+          "value": "char_length(\"workspaces\".\"name\") between 2 and 80"
+        },
+        "workspaces_slug_format": {
+          "name": "workspaces_slug_format",
+          "value": "\"workspaces\".\"slug\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(\"workspaces\".\"slug\") between 3 and 48"
+        },
+        "workspaces_currency_format": {
+          "name": "workspaces_currency_format",
+          "value": "\"workspaces\".\"currency\" ~ '^[A-Z]{3}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.memberships": {
+      "name": "memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "workspace_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "memberships_user_id_idx": {
+          "name": "memberships_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "memberships_workspace_id_workspaces_id_fk": {
+          "name": "memberships_workspace_id_workspaces_id_fk",
+          "tableFrom": "memberships",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "tableTo": "workspaces",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "memberships_user_id_profiles_id_fk": {
+          "name": "memberships_user_id_profiles_id_fk",
+          "tableFrom": "memberships",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "profiles",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "memberships_workspace_user_unique": {
+          "name": "memberships_workspace_user_unique",
+          "columns": [
+            "workspace_id",
+            "user_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "memberships_select_members": {
+          "name": "memberships_select_members",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.is_member(\"memberships\".\"workspace_id\")"
+        },
+        "memberships_update_managers": {
+          "name": "memberships_update_managers",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"memberships\".\"workspace_id\", array['owner']) or (private.has_role(\"memberships\".\"workspace_id\", array['admin']) and \"memberships\".\"role\" <> 'owner')",
+          "withCheck": "\"memberships\".\"role\" <> 'owner' or private.has_role(\"memberships\".\"workspace_id\", array['owner'])"
+        },
+        "memberships_delete_self_or_managers": {
+          "name": "memberships_delete_self_or_managers",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"memberships\".\"user_id\" = (select auth.uid()) or private.has_role(\"memberships\".\"workspace_id\", array['owner']) or (private.has_role(\"memberships\".\"workspace_id\", array['admin']) and \"memberships\".\"role\" <> 'owner')"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "audit_log_workspace_created_idx": {
+          "name": "audit_log_workspace_created_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "audit_log_workspace_id_workspaces_id_fk": {
+          "name": "audit_log_workspace_id_workspaces_id_fk",
+          "tableFrom": "audit_log",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "tableTo": "workspaces",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "audit_log_actor_id_profiles_id_fk": {
+          "name": "audit_log_actor_id_profiles_id_fk",
+          "tableFrom": "audit_log",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "tableTo": "profiles",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "audit_log_select_managers": {
+          "name": "audit_log_select_managers",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"audit_log\".\"workspace_id\", array['owner','admin'])"
+        },
+        "audit_log_insert_members": {
+          "name": "audit_log_insert_members",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "private.is_member(\"audit_log\".\"workspace_id\") and \"audit_log\".\"actor_id\" = (select auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.invitations": {
+      "name": "invitations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "workspace_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invited_by": {
+          "name": "invited_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accepted_by": {
+          "name": "accepted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "invitations_one_pending_per_email": {
+          "name": "invitations_one_pending_per_email",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"invitations\".\"accepted_at\" is null and \"invitations\".\"revoked_at\" is null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "invitations_workspace_id_workspaces_id_fk": {
+          "name": "invitations_workspace_id_workspaces_id_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "tableTo": "workspaces",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "invitations_invited_by_profiles_id_fk": {
+          "name": "invitations_invited_by_profiles_id_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": [
+            "invited_by"
+          ],
+          "tableTo": "profiles",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "invitations_accepted_by_profiles_id_fk": {
+          "name": "invitations_accepted_by_profiles_id_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": [
+            "accepted_by"
+          ],
+          "tableTo": "profiles",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "invitations_tokenHash_unique": {
+          "name": "invitations_tokenHash_unique",
+          "columns": [
+            "token_hash"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "invitations_select_managers": {
+          "name": "invitations_select_managers",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"invitations\".\"workspace_id\", array['owner','admin'])"
+        },
+        "invitations_insert_managers": {
+          "name": "invitations_insert_managers",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "private.has_role(\"invitations\".\"workspace_id\", array['owner','admin']) and \"invitations\".\"invited_by\" = (select auth.uid())"
+        },
+        "invitations_update_managers": {
+          "name": "invitations_update_managers",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"invitations\".\"workspace_id\", array['owner','admin'])",
+          "withCheck": "private.has_role(\"invitations\".\"workspace_id\", array['owner','admin'])"
+        }
+      },
+      "checkConstraints": {
+        "invitations_email_lowercase": {
+          "name": "invitations_email_lowercase",
+          "value": "\"invitations\".\"email\" = lower(\"invitations\".\"email\")"
+        },
+        "invitations_role_not_owner": {
+          "name": "invitations_role_not_owner",
+          "value": "\"invitations\".\"role\" <> 'owner'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.services": {
+      "name": "services",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "buffer_minutes": {
+          "name": "buffer_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "price_cents": {
+          "name": "price_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_is_from": {
+          "name": "price_is_from",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "bookable_online": {
+          "name": "bookable_online",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "services_workspace_name_unique": {
+          "name": "services_workspace_name_unique",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(name)",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "services_workspace_id_workspaces_id_fk": {
+          "name": "services_workspace_id_workspaces_id_fk",
+          "tableFrom": "services",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "tableTo": "workspaces",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "services_id_workspace_unique": {
+          "name": "services_id_workspace_unique",
+          "columns": [
+            "id",
+            "workspace_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "services_select_members": {
+          "name": "services_select_members",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.is_member(\"services\".\"workspace_id\")"
+        },
+        "services_insert_managers": {
+          "name": "services_insert_managers",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "private.has_role(\"services\".\"workspace_id\", array['owner','admin'])"
+        },
+        "services_update_managers": {
+          "name": "services_update_managers",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"services\".\"workspace_id\", array['owner','admin'])",
+          "withCheck": "private.has_role(\"services\".\"workspace_id\", array['owner','admin'])"
+        },
+        "services_delete_managers": {
+          "name": "services_delete_managers",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "private.has_role(\"services\".\"workspace_id\", array['owner','admin'])"
+        }
+      },
+      "checkConstraints": {
+        "services_name_length": {
+          "name": "services_name_length",
+          "value": "char_length(\"services\".\"name\") between 2 and 80"
+        },
+        "services_description_length": {
+          "name": "services_description_length",
+          "value": "char_length(\"services\".\"description\") <= 1000"
+        },
+        "services_category_length": {
+          "name": "services_category_length",
+          "value": "char_length(\"services\".\"category\") <= 40"
+        },
+        "services_duration_range": {
+          "name": "services_duration_range",
+          "value": "\"services\".\"duration_minutes\" between 5 and 720 and \"services\".\"duration_minutes\" % 5 = 0"
+        },
+        "services_buffer_range": {
+          "name": "services_buffer_range",
+          "value": "\"services\".\"buffer_minutes\" between 0 and 240 and \"services\".\"buffer_minutes\" % 5 = 0"
+        },
+        "services_price_positive": {
+          "name": "services_price_positive",
+          "value": "\"services\".\"price_cents\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.workspace_role": {
+      "name": "workspace_role",
+      "schema": "public",
+      "values": [
+        "owner",
+        "admin",
+        "staff"
+      ]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
