@@ -24,3 +24,13 @@ test("an email return link without a sign-in explains what to do", async ({
     page.getByText("open it in the same browser you signed up in"),
   ).toBeVisible();
 });
+
+test("an expired email link explains what happened", async ({ page }) => {
+  await page.goto(
+    "/?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired",
+  );
+  await expect(page).toHaveURL("/auth/error?reason=link");
+  await expect(
+    page.getByText("That link has expired or was already used."),
+  ).toBeVisible();
+});

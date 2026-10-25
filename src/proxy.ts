@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { LAST_WORKSPACE_COOKIE } from "@/lib/auth/home";
-import { routeDecision } from "@/lib/auth/routing";
+import { authReturnRedirect, routeDecision } from "@/lib/auth/routing";
 import { updateSession } from "@/lib/supabase/proxy";
 
 const CACHE_HEADERS = ["cache-control", "expires", "pragma"];
@@ -8,11 +8,17 @@ const WORKSPACE_PATH = /^\/w\/([a-z0-9-]+)(?:\/|$)/;
 
 export async function proxy(request: NextRequest) {
   const { response, isSignedIn } = await updateSession(request);
-  const decision = routeDecision(
+  const authReturn = authReturnRedirect(
     request.nextUrl.pathname,
-    request.nextUrl.search,
-    isSignedIn,
+    request.nextUrl.searchParams,
   );
+  const decision = authReturn
+    ? ({ type: "redirect", to: authReturn } as const)
+    : routeDecision(
+        request.nextUrl.pathname,
+        request.nextUrl.search,
+        isSignedIn,
+      );
   if (decision.type === "next") {
     // /dashboard checks this against the user's memberships before using it.
     const workspace = WORKSPACE_PATH.exec(request.nextUrl.pathname)?.[1];

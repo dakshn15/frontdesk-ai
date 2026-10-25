@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeDecision } from "@/lib/auth/routing";
+import { authReturnRedirect, routeDecision } from "@/lib/auth/routing";
 
 const toSignIn = (next: string) => ({
   type: "redirect",
@@ -27,5 +27,43 @@ describe("routeDecision", () => {
     ["/dashboard", "", true, { type: "next" }],
   ])("routeDecision(%s%s, signedIn=%s)", (path, search, signedIn, expected) => {
     expect(routeDecision(path, search, signedIn)).toEqual(expected);
+  });
+});
+
+// Supabase sends people to the home page when an email link fails (expired, already used),
+// and with a one-time code when the return address isn't on its allowed list.
+describe("authReturnRedirect", () => {
+  const params = (query: string) => new URLSearchParams(query);
+
+  it("sends an expired or used email link to a clear error", () => {
+    expect(
+      authReturnRedirect(
+        "/",
+        params(
+          "error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired",
+        ),
+      ),
+    ).toBe("/auth/error?reason=link");
+  });
+
+  it("sends any other sign-in error to the general error", () => {
+    expect(
+      authReturnRedirect(
+        "/",
+        params("error=server_error&error_code=unexpected_failure"),
+      ),
+    ).toBe("/auth/error?reason=callback");
+  });
+
+  it("finishes sign-in when a one-time code lands on the home page", () => {
+    expect(authReturnRedirect("/", params("code=abc123"))).toBe(
+      "/auth/callback?code=abc123&next=%2Fdashboard",
+    );
+  });
+
+  it("leaves normal requests alone", () => {
+    expect(authReturnRedirect("/", params(""))).toBeNull();
+    expect(authReturnRedirect("/sign-in", params("error=x"))).toBeNull();
+    expect(authReturnRedirect("/w/bloom", params("code=abc"))).toBeNull();
   });
 });

@@ -25,3 +25,24 @@ export function routeDecision(
   }
   return { type: "next" };
 }
+
+/**
+ * Supabase sends people to the home page when an email link fails, with `error_code` in
+ * the query, and with a one-time `code` when the return address isn't on its allowed
+ * list. Both should end somewhere useful instead of the landing page.
+ */
+export function authReturnRedirect(
+  pathname: string,
+  params: URLSearchParams,
+): string | null {
+  if (pathname !== "/") return null;
+  if (params.has("error_code") || params.has("error")) {
+    const expired = params.get("error_code") === "otp_expired";
+    return `/auth/error?reason=${expired ? "link" : "callback"}`;
+  }
+  const code = params.get("code");
+  if (code) {
+    return `/auth/callback?code=${encodeURIComponent(code)}&next=%2Fdashboard`;
+  }
+  return null;
+}
