@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { withRls } from "@/db";
 import { adminDb } from "@/db/admin";
@@ -196,6 +196,24 @@ describe("search", () => {
     expect(found.map((p) => p.content)).toEqual([
       "Free parking behind the salon.",
       "Parking for bikes is at the back.",
+    ]);
+  });
+
+  it("vector search works when extensions isn't on the search path", async () => {
+    // Hosted Supabase doesn't always put the extensions schema on the search path.
+    const { owner, ws } = await team();
+    const id = await addText(owner, ws.id, "Guide");
+    await addChunks(ws.id, id, [
+      { content: "Colour treatments take two hours.", embedding: axis(0) },
+    ]);
+    const found = await withRls(claimsFor(owner), async (tx) => {
+      await tx.execute(sql`set local search_path = public`);
+      return searchKnowledge(tx, ws.id, "highlights", {
+        queryEmbedding: axis(0),
+      });
+    });
+    expect(found.map((p) => p.content)).toEqual([
+      "Colour treatments take two hours.",
     ]);
   });
 

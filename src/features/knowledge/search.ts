@@ -1,13 +1,5 @@
 import "server-only";
-import {
-  and,
-  cosineDistance,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  sql,
-} from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import type { RlsTx } from "@/db";
 import { knowledgeChunks, knowledgeSources } from "@/db/schema";
 import { reciprocalRankFusion } from "./rrf";
@@ -66,7 +58,11 @@ export async function searchKnowledge(
           isNotNull(knowledgeChunks.embedding),
         ),
       )
-      .orderBy(cosineDistance(knowledgeChunks.embedding, queryEmbedding))
+      // Cosine distance, with the operator and type named by schema: hosted Supabase
+      // doesn't always have the extensions schema on the search path.
+      .orderBy(
+        sql`${knowledgeChunks.embedding} operator(extensions.<=>) ${JSON.stringify(queryEmbedding)}::extensions.vector`,
+      )
       .limit(CANDIDATES);
   }
 

@@ -1,4 +1,5 @@
--- pgvector stores embeddings; the table below needs it.
+-- pgvector stores embeddings. Hosted Supabase runs migrations without the extensions schema
+-- on the search path, so its type and operator class are named with their schema.
 create extension if not exists vector with schema extensions;--> statement-breakpoint
 CREATE TYPE "public"."knowledge_kind" AS ENUM('file', 'url', 'sitemap', 'text');--> statement-breakpoint
 CREATE TYPE "public"."knowledge_status" AS ENUM('queued', 'processing', 'ready', 'failed');--> statement-breakpoint
@@ -10,7 +11,7 @@ CREATE TABLE "knowledge_chunks" (
 	"heading" text DEFAULT '' NOT NULL,
 	"content" text NOT NULL,
 	"page_url" text,
-	"embedding" vector(1536),
+	"embedding" extensions.vector(1536),
 	"fts" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', heading || ' ' || content)) STORED,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -44,7 +45,7 @@ ALTER TABLE "knowledge_sources" ADD CONSTRAINT "knowledge_sources_workspace_id_w
 ALTER TABLE "knowledge_sources" ADD CONSTRAINT "knowledge_sources_created_by_profiles_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "knowledge_chunks_source_idx" ON "knowledge_chunks" USING btree ("source_id","position");--> statement-breakpoint
 CREATE INDEX "knowledge_chunks_workspace_idx" ON "knowledge_chunks" USING btree ("workspace_id");--> statement-breakpoint
-CREATE INDEX "knowledge_chunks_embedding_idx" ON "knowledge_chunks" USING hnsw ("embedding" vector_cosine_ops);--> statement-breakpoint
+CREATE INDEX "knowledge_chunks_embedding_idx" ON "knowledge_chunks" USING hnsw ("embedding" extensions.vector_cosine_ops);--> statement-breakpoint
 CREATE INDEX "knowledge_chunks_fts_idx" ON "knowledge_chunks" USING gin ("fts");--> statement-breakpoint
 CREATE INDEX "knowledge_sources_workspace_idx" ON "knowledge_sources" USING btree ("workspace_id","created_at");--> statement-breakpoint
 CREATE POLICY "knowledge_chunks_select_members" ON "knowledge_chunks" AS PERMISSIVE FOR SELECT TO "authenticated" USING (private.is_member("knowledge_chunks"."workspace_id"));--> statement-breakpoint
