@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodFieldErrors } from "@/lib/validation";
 import { getServerEnv } from "@/env/server";
 import { fail, type FormState, ok } from "@/lib/action-result";
-import { safeRedirectPath } from "@/lib/auth/redirect";
+import { authCallbackUrl, safeRedirectPath } from "@/lib/auth/redirect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   EMAIL_NOT_CONFIRMED,
@@ -18,11 +18,8 @@ import {
 const TRY_AGAIN = "Something went wrong. Try again in a moment.";
 const CHECK_FIELDS = "Check the highlighted fields.";
 
-/** Where confirmation emails send people back to: a path on this site with no query string. */
 function emailRedirect(next: string | undefined): string {
-  const siteUrl = getServerEnv().NEXT_PUBLIC_SITE_URL;
-  const path = safeRedirectPath(next, siteUrl).split(/[?#]/)[0];
-  return `${siteUrl}${path}`;
+  return authCallbackUrl(getServerEnv().NEXT_PUBLIC_SITE_URL, next);
 }
 
 export async function signUp(
@@ -102,7 +99,7 @@ export async function requestPasswordReset(
   const supabase = await createSupabaseServerClient();
   // The result is ignored on purpose: the reply is the same whether or not the account exists.
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${getServerEnv().NEXT_PUBLIC_SITE_URL}/account/update-password`,
+    redirectTo: emailRedirect("/account/update-password"),
   });
   return ok();
 }

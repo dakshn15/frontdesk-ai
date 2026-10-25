@@ -14,3 +14,13 @@ test("a bad confirmation link shows a helpful error", async ({ page }) => {
     page.getByText("That link has expired or was already used."),
   ).toBeVisible();
 });
+
+test("an email return link without a sign-in explains what to do", async ({
+  page,
+}) => {
+  await page.goto("/auth/callback?next=%2Fdashboard");
+  await expect(page).toHaveURL("/auth/error?reason=callback");
+  await expect(
+    page.getByText("open it in the same browser you signed up in"),
+  ).toBeVisible();
+});

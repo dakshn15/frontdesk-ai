@@ -20,3 +20,16 @@ export function safeRedirectPath(
   if (url.origin !== site.origin) return fallback;
   return `${url.pathname}${url.search}${url.hash}`;
 }
+
+/**
+ * Where auth emails send people back to. /auth/callback signs them in, either with the
+ * one-time code from Supabase's default emails or with the session the token-hash link
+ * already created, then continues to `next`, which is made safe first.
+ */
+export function authCallbackUrl(
+  siteUrl: string,
+  next: string | null | undefined,
+): string {
+  const path = safeRedirectPath(next, siteUrl);
+  return `${siteUrl}/auth/callback?next=${encodeURIComponent(path)}`;
+}
