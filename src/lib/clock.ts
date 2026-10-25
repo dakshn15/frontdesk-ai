@@ -39,3 +39,9 @@ export function zonedDateTimeToUtc(
   const zoned = new TZDate(year, month - 1, day, hours, minutes, timeZone);
   return new Date(zoned.getTime());
 }
+
+/** The calendar date ("2026-10-25") at `now` in a time zone. */
+export function localDate(timeZone: string, now: Date = new Date()): string {
+  // en-CA formats dates as YYYY-MM-DD.
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(now);
+}

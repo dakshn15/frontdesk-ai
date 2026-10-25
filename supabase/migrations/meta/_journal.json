@@ -71,6 +71,20 @@
       "when": 1792922833268,
       "tag": "20261025100713_staff_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792923504205,
+      "tag": "20261025101824_hours",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792923515044,
+      "tag": "20261025101835_hours_rules",
+      "breakpoints": true
     }
   ]
 }

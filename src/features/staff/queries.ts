@@ -9,7 +9,7 @@ import {
   staffServices,
   staffTimeOff,
 } from "@/db/schema";
-import { emptyWeek, type Weekday, type WeeklyHours } from "@/features/hours/weekly-hours";
+import { rowsToWeek, type WeeklyHours } from "@/features/hours/weekly-hours";
 
 export type StaffSummary = {
   id: string;
@@ -72,12 +72,11 @@ export async function getStaffDetail(
       tx
         .select({
           weekday: staffHours.weekday,
-          start: staffHours.startMinute,
-          end: staffHours.endMinute,
+          startMinute: staffHours.startMinute,
+          endMinute: staffHours.endMinute,
         })
         .from(staffHours)
-        .where(eq(staffHours.staffId, staffId))
-        .orderBy(asc(staffHours.weekday), asc(staffHours.startMinute)),
+        .where(eq(staffHours.staffId, staffId)),
       tx
         .select({
           id: staffTimeOff.id,
@@ -110,14 +109,10 @@ export async function getStaffDetail(
         .orderBy(asc(sql`lower(${profiles.fullName})`)),
     ]);
 
-    const hours = emptyWeek();
-    for (const row of hourRows) {
-      hours[row.weekday as Weekday].push({ start: row.start, end: row.end });
-    }
     return {
       profile,
       serviceIds: serviceRows.map((row) => row.serviceId),
-      hours,
+      hours: rowsToWeek(hourRows),
       timeOff,
       linkableMembers: members.map((m) => ({
         userId: m.userId,

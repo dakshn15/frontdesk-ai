@@ -76,3 +76,31 @@ export function parseWeeklyHours(
   }
   return { ok: true, hours };
 }
+
+type RangeRow = { weekday: number; startMinute: number; endMinute: number };
+
+/** One row per time range, the shape the hours tables store. */
+export function weekToRows(
+  hours: WeeklyHours,
+): { weekday: Weekday; startMinute: number; endMinute: number }[] {
+  return WEEKDAYS.flatMap(({ day }) =>
+    hours[day].map((range) => ({
+      weekday: day,
+      startMinute: range.start,
+      endMinute: range.end,
+    })),
+  );
+}
+
+/** A week from stored rows, each day's ranges in start order. */
+export function rowsToWeek(rows: RangeRow[]): WeeklyHours {
+  const hours = emptyWeek();
+  const sorted = [...rows].sort((a, b) => a.startMinute - b.startMinute);
+  for (const row of sorted) {
+    hours[row.weekday as Weekday].push({
+      start: row.startMinute,
+      end: row.endMinute,
+    });
+  }
+  return hours;
+}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clockToMinutes,
   formatClock,
+  localDate,
   minutesToClock,
   zonedDateTimeToUtc,
 } from "@/lib/clock";
@@ -47,5 +48,13 @@ describe("zonedDateTimeToUtc", () => {
     expect(
       zonedDateTimeToUtc("2026-10-31", "09:00", "Asia/Kolkata").toISOString(),
     ).toBe("2026-10-31T03:30:00.000Z");
+  });
+});
+
+describe("localDate", () => {
+  it("gives the calendar date in a time zone", () => {
+    const now = new Date("2026-10-25T03:00:00Z");
+    expect(localDate("America/Chicago", now)).toBe("2026-10-24");
+    expect(localDate("Asia/Tokyo", now)).toBe("2026-10-25");
   });
 });

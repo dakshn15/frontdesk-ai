@@ -7,7 +7,7 @@ import {
   PG_UNIQUE_VIOLATION,
 } from "@/db/errors";
 import { staff, staffHours, staffServices, staffTimeOff } from "@/db/schema";
-import { WEEKDAYS, type WeeklyHours } from "@/features/hours/weekly-hours";
+import { type WeeklyHours, weekToRows } from "@/features/hours/weekly-hours";
 import { assertManager, Refused } from "@/features/workspaces/access";
 import type { StaffProfile } from "./schemas";
 
@@ -152,15 +152,11 @@ export async function replaceStaffHoursRecord(
         .where(
           and(eq(staffHours.staffId, staffId), eq(staffHours.workspaceId, workspaceId)),
         );
-      const rows = WEEKDAYS.flatMap(({ day }) =>
-        hours[day].map((range) => ({
-          workspaceId,
-          staffId,
-          weekday: day,
-          startMinute: range.start,
-          endMinute: range.end,
-        })),
-      );
+      const rows = weekToRows(hours).map((row) => ({
+        workspaceId,
+        staffId,
+        ...row,
+      }));
       if (rows.length > 0) await tx.insert(staffHours).values(rows);
     }),
   );
