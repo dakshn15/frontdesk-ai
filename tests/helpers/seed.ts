@@ -95,6 +95,24 @@ export async function createTestStaff(
   return { id: row.id };
 }
 
+/** Sets opening hours as `owner`, through row level security. Minutes since local midnight. */
+export async function setTestOpeningHours(
+  workspaceId: string,
+  owner: TestUser,
+  ranges: { weekday: number; startMinute: number; endMinute: number }[],
+): Promise<void> {
+  const rows = ranges.map((range) => ({
+    workspace_id: workspaceId,
+    weekday: range.weekday,
+    start_minute: range.startMinute,
+    end_minute: range.endMinute,
+  }));
+  await asUser(
+    owner.id,
+    (tx) => tx`insert into public.business_hours ${tx(rows)}`,
+  );
+}
+
 /** Creates an invite as `invitedBy`, through row level security, and returns its raw token. */
 export async function createTestInvite(
   workspaceId: string,

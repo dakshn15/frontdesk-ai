@@ -4,7 +4,7 @@ import { type AuthClaims, withRls } from "@/db";
 import { services } from "@/db/schema";
 import type { ServiceInput } from "./schemas";
 
-export type Service = ServiceInput & { id: string };
+export type Service = ServiceInput & { id: string; staffCount: number };
 
 /** Services grouped by category, then by name, ignoring case. */
 export async function listServices(
@@ -23,6 +23,9 @@ export async function listServices(
         priceCents: services.priceCents,
         priceIsFrom: services.priceIsFrom,
         bookableOnline: services.bookableOnline,
+        // Plain SQL so `services.id` means the outer row: Drizzle drops table names in
+        // a single-table select.
+        staffCount: sql<number>`(select count(*)::int from public.staff_services ss where ss.service_id = services.id)`,
       })
       .from(services)
       .where(eq(services.workspaceId, workspaceId))

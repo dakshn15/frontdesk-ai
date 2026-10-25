@@ -82,7 +82,10 @@ describe("weekToRows and rowsToWeek", () => {
   it("round-trip a week, sorting each day's ranges", () => {
     const week = {
       ...emptyWeek(),
-      2: [{ start: 780, end: 1080 }, { start: 540, end: 720 }],
+      2: [
+        { start: 780, end: 1080 },
+        { start: 540, end: 720 },
+      ],
       7: [{ start: 600, end: 1440 }],
     };
     const rows = weekToRows(week);
@@ -93,7 +96,10 @@ describe("weekToRows and rowsToWeek", () => {
     ]);
     expect(rowsToWeek(rows)).toEqual({
       ...emptyWeek(),
-      2: [{ start: 540, end: 720 }, { start: 780, end: 1080 }],
+      2: [
+        { start: 540, end: 720 },
+        { start: 780, end: 1080 },
+      ],
       7: [{ start: 600, end: 1440 }],
     });
   });

@@ -81,11 +81,14 @@ describe("opening hours", () => {
     const first = {
       ...emptyWeek(),
       1: [{ start: 540, end: 1020 }],
-      5: [{ start: 540, end: 720 }, { start: 780, end: 1080 }],
+      5: [
+        { start: 540, end: 720 },
+        { start: 780, end: 1080 },
+      ],
     };
-    expect(await replaceOpeningHoursRecord(claimsFor(owner), ws.id, first)).toBe(
-      "ok",
-    );
+    expect(
+      await replaceOpeningHoursRecord(claimsFor(owner), ws.id, first),
+    ).toBe("ok");
     const late = { ...emptyWeek(), 6: [{ start: 1080, end: 1440 }] };
     expect(await replaceOpeningHoursRecord(claimsFor(owner), ws.id, late)).toBe(
       "ok",
@@ -148,7 +151,10 @@ describe("closed days", () => {
     expect(westList.map((d) => d.date)).toEqual([westToday, eastToday]);
     const eastList = await listClosedDays(claimsFor(owner), ws.id, east);
     expect(eastList.map((d) => d.date)).toEqual([eastToday]);
-    expect(eastList[0]).toEqual({ id: expect.any(String), date: eastToday, name: "" });
-
+    expect(eastList[0]).toEqual({
+      id: expect.any(String),
+      date: eastToday,
+      name: "",
+    });
   });
 });

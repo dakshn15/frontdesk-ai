@@ -96,14 +96,40 @@ export function TextareaField({
   );
 }
 
-/** A checkbox with its label beside it. Sends "on" when ticked. */
+/** A labelled native select; pass the options as children. */
+export function SelectField({
+  label,
+  name,
+  hint,
+  errors,
+  id,
+  ...select
+}: ComponentProps<"select"> & Described) {
+  const inputId = id ?? `field-${name}`;
+  const { hintId, errorId, props } = describedBy(inputId, hint, errors);
+  return (
+    <FieldShell {...{ id: inputId, label, hint, errors, hintId, errorId }}>
+      <select
+        id={inputId}
+        name={name}
+        className="h-10 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive dark:bg-input/30"
+        {...props}
+        {...select}
+      />
+    </FieldShell>
+  );
+}
+
+/** A checkbox with its label beside it. Sends `value` ("on" by default) when ticked. */
 export function CheckboxField({
   label,
   name,
+  value,
   defaultChecked,
 }: {
   label: string;
   name: string;
+  value?: string;
   defaultChecked?: boolean;
 }) {
   return (
@@ -111,6 +137,7 @@ export function CheckboxField({
       <input
         type="checkbox"
         name={name}
+        value={value}
         defaultChecked={defaultChecked}
         className="size-4 accent-primary"
       />

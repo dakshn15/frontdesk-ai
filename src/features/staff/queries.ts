@@ -29,14 +29,16 @@ export type StaffDetail = {
   linkableMembers: { userId: string; name: string }[];
 };
 
+// Drizzle writes column names without their table in a single-table select, so these
+// correlated subqueries name their tables in plain SQL: `staff.id` is the outer row.
 const summaryColumns = {
   id: staff.id,
   name: staff.name,
   title: staff.title,
   active: staff.active,
   userId: staff.userId,
-  serviceCount: sql<number>`(select count(*)::int from ${staffServices} where ${staffServices.staffId} = ${staff.id})`,
-  hasHours: sql<boolean>`exists (select 1 from ${staffHours} where ${staffHours.staffId} = ${staff.id})`,
+  serviceCount: sql<number>`(select count(*)::int from public.staff_services ss where ss.staff_id = staff.id)`,
+  hasHours: sql<boolean>`exists (select 1 from public.staff_hours sh where sh.staff_id = staff.id)`,
 };
 
 export async function listStaff(
@@ -85,7 +87,12 @@ export async function getStaffDetail(
           note: staffTimeOff.note,
         })
         .from(staffTimeOff)
-        .where(and(eq(staffTimeOff.staffId, staffId), gt(staffTimeOff.endsAt, sql`now()`)))
+        .where(
+          and(
+            eq(staffTimeOff.staffId, staffId),
+            gt(staffTimeOff.endsAt, sql`now()`),
+          ),
+        )
         .orderBy(asc(staffTimeOff.startsAt)),
       // Members not linked to any other staff profile (this one's link stays available).
       tx
@@ -98,7 +105,10 @@ export async function getStaffDetail(
         .innerJoin(profiles, eq(profiles.id, memberships.userId))
         .leftJoin(
           staff,
-          and(eq(staff.userId, memberships.userId), eq(staff.workspaceId, workspaceId)),
+          and(
+            eq(staff.userId, memberships.userId),
+            eq(staff.workspaceId, workspaceId),
+          ),
         )
         .where(
           and(

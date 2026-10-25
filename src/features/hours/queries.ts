@@ -29,7 +29,11 @@ export async function listClosedDays(
 ): Promise<{ id: string; date: string; name: string }[]> {
   return withRls(claims, (tx) =>
     tx
-      .select({ id: closedDays.id, date: closedDays.date, name: closedDays.name })
+      .select({
+        id: closedDays.id,
+        date: closedDays.date,
+        name: closedDays.name,
+      })
       .from(closedDays)
       .where(
         and(

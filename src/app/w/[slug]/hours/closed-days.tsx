@@ -11,7 +11,13 @@ import { addClosedDay, deleteClosedDay } from "@/features/hours/actions";
 
 type ClosedDay = { id: string; label: string; name: string };
 
-export function ClosedDays({ slug, days }: { slug: string; days: ClosedDay[] }) {
+export function ClosedDays({
+  slug,
+  days,
+}: {
+  slug: string;
+  days: ClosedDay[];
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const { state, onSubmit, pending, fieldErrors, formError } = useActionForm(
     addClosedDay.bind(null, slug),
@@ -61,7 +67,10 @@ export function ClosedDays({ slug, days }: { slug: string; days: ClosedDay[] }) 
           No closed days coming up.
         </p>
       ) : (
-        <ul aria-label="Closed days coming up" className="divide-y rounded-xl border">
+        <ul
+          aria-label="Closed days coming up"
+          className="divide-y rounded-xl border"
+        >
           {days.map((day) => (
             <li key={day.id} className="flex items-center gap-4 px-4 py-3">
               <div className="min-w-0 flex-1">
@@ -81,7 +90,13 @@ export function ClosedDays({ slug, days }: { slug: string; days: ClosedDay[] }) 
   );
 }
 
-function RemoveClosedDayButton({ slug, day }: { slug: string; day: ClosedDay }) {
+function RemoveClosedDayButton({
+  slug,
+  day,
+}: {
+  slug: string;
+  day: ClosedDay;
+}) {
   const { state, onSubmit, pending } = useActionForm(
     deleteClosedDay.bind(null, slug),
   );

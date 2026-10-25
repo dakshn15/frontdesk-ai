@@ -66,16 +66,27 @@ export const timeOffSchema = z
   .superRefine((value, ctx) => {
     if (value.allDay) {
       if (value.endDate < value.startDate) {
-        ctx.addIssue({ code: "custom", path: ["endDate"], message: ORDER_ERROR });
+        ctx.addIssue({
+          code: "custom",
+          path: ["endDate"],
+          message: ORDER_ERROR,
+        });
       }
       return;
     }
     if (!value.startTime || !value.endTime) {
-      ctx.addIssue({ code: "custom", path: ["startTime"], message: TIMES_ERROR });
+      ctx.addIssue({
+        code: "custom",
+        path: ["startTime"],
+        message: TIMES_ERROR,
+      });
       return;
     }
     // ISO dates and HH:MM times compare correctly as text.
-    if (`${value.endDate} ${value.endTime}` <= `${value.startDate} ${value.startTime}`) {
+    if (
+      `${value.endDate} ${value.endTime}` <=
+      `${value.startDate} ${value.startTime}`
+    ) {
       ctx.addIssue({ code: "custom", path: ["endDate"], message: ORDER_ERROR });
     }
   });
@@ -84,7 +95,9 @@ export type TimeOffInput = z.output<typeof timeOffSchema>;
 
 function nextDay(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+  return new Date(Date.UTC(year, month - 1, day + 1))
+    .toISOString()
+    .slice(0, 10);
 }
 
 /** The exact start and end of a time-off entry, in the business's time zone. All day runs to midnight after the end date. */

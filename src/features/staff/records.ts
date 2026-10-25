@@ -14,7 +14,9 @@ import type { StaffProfile } from "./schemas";
 type Allowed = "ok" | "not_allowed";
 
 /** Maps refusals and broken links to "not_allowed", a second link to the same login to "member_already_linked". */
-function profileError(err: unknown): "not_allowed" | "member_already_linked" | null {
+function profileError(
+  err: unknown,
+): "not_allowed" | "member_already_linked" | null {
   if (err instanceof Refused) return "not_allowed";
   const code = getPgError(err)?.code;
   if (code === PG_UNIQUE_VIOLATION) return "member_already_linked";
@@ -46,7 +48,8 @@ async function allowed(work: Promise<unknown>): Promise<Allowed> {
     return "ok";
   } catch (err) {
     if (err instanceof Refused) return "not_allowed";
-    if (getPgError(err)?.code === PG_FOREIGN_KEY_VIOLATION) return "not_allowed";
+    if (getPgError(err)?.code === PG_FOREIGN_KEY_VIOLATION)
+      return "not_allowed";
     throw err;
   }
 }
@@ -56,7 +59,8 @@ export async function createStaffRecord(
   workspaceId: string,
   profile: StaffProfile,
 ): Promise<
-  { ok: true; id: string } | { ok: false; error: "not_allowed" | "member_already_linked" }
+  | { ok: true; id: string }
+  | { ok: false; error: "not_allowed" | "member_already_linked" }
 > {
   try {
     const id = await withRls(claims, async (tx) => {
@@ -132,7 +136,9 @@ export async function setStaffServicesRecord(
       if (unique.length > 0) {
         await tx
           .insert(staffServices)
-          .values(unique.map((serviceId) => ({ workspaceId, staffId, serviceId })));
+          .values(
+            unique.map((serviceId) => ({ workspaceId, staffId, serviceId })),
+          );
       }
     }),
   );
@@ -150,7 +156,10 @@ export async function replaceStaffHoursRecord(
       await tx
         .delete(staffHours)
         .where(
-          and(eq(staffHours.staffId, staffId), eq(staffHours.workspaceId, workspaceId)),
+          and(
+            eq(staffHours.staffId, staffId),
+            eq(staffHours.workspaceId, workspaceId),
+          ),
         );
       const rows = weekToRows(hours).map((row) => ({
         workspaceId,

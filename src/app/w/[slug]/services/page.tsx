@@ -77,6 +77,9 @@ export default async function ServicesPage({
                         )}
                       </p>
                     </div>
+                    <span className="text-sm text-muted-foreground">
+                      {service.staffCount} staff
+                    </span>
                     {service.bookableOnline ? null : (
                       <Badge variant="secondary">Not bookable online</Badge>
                     )}

@@ -12,6 +12,7 @@ import {
   staffTimeOff,
 } from "@/db/schema";
 import { emptyWeek } from "@/features/hours/weekly-hours";
+import { listServices } from "@/features/services/queries";
 import { getStaffDetail, listStaff } from "@/features/staff/queries";
 import {
   addTimeOffRecord,
@@ -124,8 +125,20 @@ describe("staff", () => {
     const err = await pgErrorOf(
       withRls(claimsFor(ana), (tx) =>
         tx.insert(staffHours).values([
-          { workspaceId: ws.id, staffId: id, weekday: 1, startMinute: 540, endMinute: 720 },
-          { workspaceId: ws.id, staffId: id, weekday: 1, startMinute: 660, endMinute: 840 },
+          {
+            workspaceId: ws.id,
+            staffId: id,
+            weekday: 1,
+            startMinute: 540,
+            endMinute: 720,
+          },
+          {
+            workspaceId: ws.id,
+            staffId: id,
+            weekday: 1,
+            startMinute: 660,
+            endMinute: 840,
+          },
         ]),
       ),
     );
@@ -149,9 +162,11 @@ describe("staff", () => {
     const outsider = await createTestUser();
     const notMember = await pgErrorOf(
       withRls(claimsFor(ana), (tx) =>
-        tx
-          .insert(staff)
-          .values({ workspaceId: ws.id, name: "Outsider", userId: outsider.id }),
+        tx.insert(staff).values({
+          workspaceId: ws.id,
+          name: "Outsider",
+          userId: outsider.id,
+        }),
       ),
     );
     expect(notMember?.code).toBe("23503");
@@ -250,7 +265,11 @@ describe("staff", () => {
     const { ana, cara, ws } = await team();
     await createTestStaff(ws.id, ana, { userId: cara.id });
     expect(
-      await createStaffRecord(claimsFor(ana), ws.id, profile("Cara again", cara.id)),
+      await createStaffRecord(
+        claimsFor(ana),
+        ws.id,
+        profile("Cara again", cara.id),
+      ),
     ).toEqual({ ok: false, error: "member_already_linked" });
   });
 
@@ -280,5 +299,45 @@ describe("staff", () => {
       tx.execute(sql`select count(*)::int as n from public.staff_hours`),
     );
     expect(rows[0]).toEqual({ n: 0 });
+  });
+
+  it("services count the staff who perform them", async () => {
+    const { ana, ws } = await team();
+    const { id: maya } = await createTestStaff(ws.id, ana);
+    const { id: jo } = await createTestStaff(ws.id, ana);
+    const { id: cut } = await createTestService(ws.id, ana, { name: "Cut" });
+    const { id: colour } = await createTestService(ws.id, ana, {
+      name: "Colour",
+    });
+    await setStaffServicesRecord(claimsFor(ana), ws.id, maya, [cut, colour]);
+    await setStaffServicesRecord(claimsFor(ana), ws.id, jo, [cut]);
+    const counts = (await listServices(claimsFor(ana), ws.id)).map((s) => [
+      s.name,
+      s.staffCount,
+    ]);
+    expect(counts).toEqual([
+      ["Colour", 1],
+      ["Cut", 2],
+    ]);
+  });
+
+  it("the list shows who has hours and how many services", async () => {
+    const { ana, ws } = await team();
+    const { id: maya } = await createTestStaff(ws.id, ana, { name: "Maya" });
+    await createTestStaff(ws.id, ana, { name: "Jo" });
+    const { id: cut } = await createTestService(ws.id, ana);
+    await replaceStaffHoursRecord(claimsFor(ana), ws.id, maya, nineToFive);
+    await setStaffServicesRecord(claimsFor(ana), ws.id, maya, [cut]);
+    const summary = (await listStaff(claimsFor(ana), ws.id)).map((s) => [
+      s.name,
+      s.hasHours,
+      s.serviceCount,
+    ]);
+    expect(summary).toEqual([
+      ["Jo", false, 0],
+      ["Maya", true, 1],
+    ]);
+    const detail = await getStaffDetail(claimsFor(ana), ws.id, maya);
+    expect(detail?.profile).toMatchObject({ hasHours: true, serviceCount: 1 });
   });
 });
