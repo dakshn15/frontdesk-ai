@@ -6,6 +6,7 @@ import {
   getMembershipBySlug,
   type Membership,
 } from "@/features/workspaces/queries";
+import { canEditWorkspace } from "@/features/workspaces/permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /** The verified claims of the signed-in user, or null. One check per request. */
@@ -33,4 +34,13 @@ export async function requireMembership(
   const membership = await getMembershipBySlug(claims, slug);
   if (!membership) notFound();
   return { claims, membership };
+}
+
+/** Like requireMembership, for pages only owners and admins may use. Staff get a 404. */
+export async function requireManager(
+  slug: string,
+): Promise<{ claims: AuthClaims; membership: Membership }> {
+  const result = await requireMembership(slug);
+  if (!canEditWorkspace(result.membership.role)) notFound();
+  return result;
 }

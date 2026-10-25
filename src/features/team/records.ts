@@ -1,6 +1,6 @@
 import "server-only";
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { type AuthClaims, type RlsTx, withRls } from "@/db";
+import { type AuthClaims, withRls } from "@/db";
 import { getPgError, PG_INSUFFICIENT_PRIVILEGE, PG_RAISE } from "@/db/errors";
 import {
   auditLog,
@@ -9,6 +9,7 @@ import {
   profiles,
   type WorkspaceRole,
 } from "@/db/schema";
+import { getMyRole } from "@/features/workspaces/access";
 import { canManageTeam } from "@/features/workspaces/permissions";
 import { createInviteToken, inviteExpiresAt } from "./invite-token";
 
@@ -39,23 +40,6 @@ function refusal(err: unknown): "not_allowed" | "last_owner" | null {
   return null;
 }
 
-async function myRole(
-  tx: RlsTx,
-  claims: AuthClaims,
-  workspaceId: string,
-): Promise<WorkspaceRole | null> {
-  const [row] = await tx
-    .select({ role: memberships.role })
-    .from(memberships)
-    .where(
-      and(
-        eq(memberships.workspaceId, workspaceId),
-        eq(memberships.userId, claims.sub),
-      ),
-    );
-  return row?.role ?? null;
-}
-
 /** Creates an invite and returns its raw token, which is shown once and never stored. */
 export async function createInviteRecord(
   claims: AuthClaims,
@@ -68,7 +52,7 @@ export async function createInviteRecord(
   const email = input.email.trim().toLowerCase();
   try {
     return await withRls(claims, async (tx) => {
-      const role = await myRole(tx, claims, workspaceId);
+      const role = await getMyRole(tx, claims, workspaceId);
       if (!role || !canManageTeam(role)) {
         return { ok: false, error: "not_allowed" } as const;
       }
