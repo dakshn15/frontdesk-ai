@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createBooking } from "@/features/bookings/actions";
-import { SlotPicker } from "./slot-picker";
+import { SlotPicker } from "@/components/booking/slot-picker";
 
 export type ServiceOption = { id: string; name: string };
 export type StaffOption = { id: string; name: string; serviceIds: string[] };

@@ -15,6 +15,7 @@ import {
   ok,
 } from "@/lib/action-result";
 import { zodFieldErrors } from "@/lib/validation";
+import { sendBookingEmail } from "@/privileged/booking-emails";
 import {
   cancelBookingRecord,
   createBookingRecord,
@@ -28,16 +29,11 @@ import {
   customerSchema,
   newBookingSchema,
   rescheduleSchema,
+  type SlotChoice,
   staffChoiceSchema,
 } from "./schemas";
 
 const SLOT_TAKEN = "That time was just taken. Pick another.";
-
-export type SlotChoice = {
-  staffId: string;
-  staffName: string;
-  startsAt: string;
-};
 
 const slotQuerySchema = z.object({
   serviceId: z.uuid(),
@@ -94,6 +90,11 @@ export async function createBooking(
       ? fail(CHECK_FIELDS, { startsAt: [SLOT_TAKEN] })
       : fail(NOT_ALLOWED);
   }
+  await sendBookingEmail({
+    bookingId: result.id,
+    kind: "confirmed",
+    manageToken: result.manageToken,
+  });
   refresh(slug);
   return ok();
 }
@@ -118,6 +119,8 @@ export async function rescheduleBooking(
     return fail(CHECK_FIELDS, { startsAt: [SLOT_TAKEN] });
   }
   if (result !== "ok") return fail(NOT_ALLOWED);
+  // A new manage link goes out with the new time.
+  await sendBookingEmail({ bookingId, kind: "rescheduled" });
   refresh(slug);
   return ok();
 }
@@ -143,6 +146,9 @@ export async function updateBookingStatus(
       ? await cancelBookingRecord(claims, workspace.id, bookingId)
       : await setBookingStatusRecord(claims, workspace.id, bookingId, status);
   if (result !== "ok") return fail(NOT_ALLOWED);
+  if (status === "cancelled") {
+    await sendBookingEmail({ bookingId, kind: "cancelled" });
+  }
   refresh(slug);
   return ok();
 }

@@ -19,6 +19,7 @@ import {
   deleteStaffRecord,
   deleteTimeOffRecord,
   replaceStaffHoursRecord,
+  resetCalendarTokenRecord,
   setStaffServicesRecord,
   updateStaffProfileRecord,
 } from "./records";
@@ -197,4 +198,21 @@ export async function deleteStaff(
   if (result !== "ok") return fail(NOT_ALLOWED);
   refresh(slug);
   redirect(`/w/${slug}/staff`);
+}
+
+export async function resetCalendarFeed(
+  slug: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const context = await staffContext(slug, formData);
+  if (!context) return fail(NOT_ALLOWED);
+  const token = await resetCalendarTokenRecord(
+    context.claims,
+    context.workspace.id,
+    context.staffId,
+  );
+  if (!token) return fail(NOT_ALLOWED);
+  refresh(slug);
+  return ok();
 }

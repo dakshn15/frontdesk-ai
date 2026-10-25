@@ -71,3 +71,10 @@ export const bookingRulesSchema = z
     ...rules,
     minNoticeMinutes: minNoticeHours * 60,
   }));
+
+/** A free start time sent to the browser. */
+export type SlotChoice = {
+  staffId: string;
+  staffName: string;
+  startsAt: string;
+};

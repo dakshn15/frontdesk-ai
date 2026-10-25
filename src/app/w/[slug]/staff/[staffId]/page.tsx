@@ -4,12 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { z } from "zod";
+import { getServerEnv } from "@/env/server";
 import { getOpeningHours } from "@/features/hours/queries";
 import { WEEKDAYS } from "@/features/hours/weekly-hours";
 import { listServices } from "@/features/services/queries";
 import { formatTimeOff } from "@/features/staff/format";
 import { getStaffDetail } from "@/features/staff/queries";
 import { requireManager } from "@/lib/auth/session";
+import { CalendarFeed } from "./calendar-feed";
 import { DeleteStaffDialog } from "./delete-staff-dialog";
 import { HoursForm } from "./hours-form";
 import { ProfileForm } from "./profile-form";
@@ -128,6 +130,18 @@ export default async function StaffMemberPage({
                 workspace.timezone,
               ),
             }))}
+          />
+        </Section>
+
+        <Section
+          id="calendar-feed"
+          title="Calendar feed"
+          description="Subscribe to this link in Google Calendar, Apple Calendar or Outlook to see this person's bookings there. Keep it private: anyone with the link can see them."
+        >
+          <CalendarFeed
+            slug={workspace.slug}
+            staffId={profile.id}
+            url={`${getServerEnv().NEXT_PUBLIC_SITE_URL}/api/calendar/${profile.calendarToken}.ics`}
           />
         </Section>
 

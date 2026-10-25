@@ -22,7 +22,7 @@ export type StaffSummary = {
 };
 
 export type StaffDetail = {
-  profile: StaffSummary & { bio: string };
+  profile: StaffSummary & { bio: string; calendarToken: string };
   serviceIds: string[];
   hours: WeeklyHours;
   timeOff: { id: string; startsAt: Date; endsAt: Date; note: string }[];
@@ -61,7 +61,11 @@ export async function getStaffDetail(
 ): Promise<StaffDetail | null> {
   return withRls(claims, async (tx) => {
     const [profile] = await tx
-      .select({ ...summaryColumns, bio: staff.bio })
+      .select({
+        ...summaryColumns,
+        bio: staff.bio,
+        calendarToken: staff.calendarToken,
+      })
       .from(staff)
       .where(and(eq(staff.id, staffId), eq(staff.workspaceId, workspaceId)));
     if (!profile) return null;

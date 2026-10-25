@@ -22,7 +22,7 @@ import { localMinutes } from "@/features/bookings/calendar-layout";
 import { formatClock, localDate } from "@/lib/clock";
 import { cn } from "@/lib/utils";
 import type { StaffOption } from "./new-booking-dialog";
-import { SlotPicker } from "./slot-picker";
+import { SlotPicker } from "@/components/booking/slot-picker";
 
 export type CalendarBooking = {
   id: string;

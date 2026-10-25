@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { type AuthClaims, type RlsTx, withRls } from "@/db";
 import {
@@ -221,4 +222,21 @@ export async function deleteTimeOffRecord(
       .returning({ id: staffTimeOff.id }),
   );
   return deleted.length > 0 ? "ok" : "not_allowed";
+}
+
+/** Gives a staff member a new calendar feed link; the old one stops working. */
+export async function resetCalendarTokenRecord(
+  claims: AuthClaims,
+  workspaceId: string,
+  staffId: string,
+): Promise<string | null> {
+  const token = randomBytes(24).toString("hex");
+  const updated = await withRls(claims, (tx) =>
+    tx
+      .update(staff)
+      .set({ calendarToken: token })
+      .where(and(eq(staff.id, staffId), eq(staff.workspaceId, workspaceId)))
+      .returning({ id: staff.id }),
+  );
+  return updated.length > 0 ? token : null;
 }

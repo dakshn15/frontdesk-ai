@@ -18,6 +18,9 @@ const clientShape = {
 const serverSchema = z.object({
   DATABASE_URL: z.url(),
   DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(5),
+  // Without a Resend key, emails are written to email_log as not sent.
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(3).default("FrontDesk AI <onboarding@resend.dev>"),
   ...clientShape,
 });
 
