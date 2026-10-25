@@ -45,3 +45,29 @@ export const rescheduleSchema = z.object({
   staffId: z.uuid({ error: "Pick a staff member." }),
   startsAt: instantSchema,
 });
+
+export const SLOT_STEPS = [5, 10, 15, 20, 30, 60];
+
+const whole = (min: number, max: number, error: string) =>
+  z.coerce
+    .number({ error })
+    .int({ error })
+    .min(min, { error })
+    .max(max, { error });
+
+/** The settings form: notice is entered in hours and stored in minutes. */
+export const bookingRulesSchema = z
+  .object({
+    slotStepMinutes: z.coerce
+      .number()
+      .refine((value) => SLOT_STEPS.includes(value), {
+        error: "Pick one of the listed times.",
+      }),
+    minNoticeHours: whole(0, 168, "Use 0 to 168 hours."),
+    maxDaysAhead: whole(1, 365, "Use 1 to 365 days."),
+    cancellationWindowHours: whole(0, 168, "Use 0 to 168 hours."),
+  })
+  .transform(({ minNoticeHours, ...rules }) => ({
+    ...rules,
+    minNoticeMinutes: minNoticeHours * 60,
+  }));

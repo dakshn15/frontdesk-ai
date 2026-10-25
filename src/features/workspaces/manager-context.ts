@@ -17,3 +17,16 @@ export async function getManagerContext(
   if (!membership || !canEditWorkspace(membership.role)) return null;
   return { claims, workspace: membership.workspace };
 }
+
+/** For server actions any member may use (the calendar): the caller, workspace and role. */
+export async function getMemberContext(slug: string): Promise<{
+  claims: AuthClaims;
+  workspace: Membership["workspace"];
+  role: Membership["role"];
+} | null> {
+  const claims = await getAuthClaims();
+  if (!claims) return null;
+  const membership = await getMembershipBySlug(claims, slug);
+  if (!membership) return null;
+  return { claims, workspace: membership.workspace, role: membership.role };
+}

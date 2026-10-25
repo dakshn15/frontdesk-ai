@@ -14,7 +14,9 @@ export function useActionForm<T = undefined>(
   const [state, dispatch, pending] = useActionState(action, null);
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    // Include the clicked button's name and value, as a normal submit would.
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const formData = new FormData(event.currentTarget, submitter);
     startTransition(() => dispatch(formData));
   }
   const fieldErrors = state && !state.ok ? state.fieldErrors : undefined;

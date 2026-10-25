@@ -14,6 +14,10 @@ export type Membership = {
     website: string | null;
     timezone: string;
     currency: string;
+    slotStepMinutes: number;
+    minNoticeMinutes: number;
+    maxDaysAhead: number;
+    cancellationWindowHours: number;
   };
 };
 
@@ -50,6 +54,10 @@ export const getMembershipBySlug = cache(
             website: workspaces.website,
             timezone: workspaces.timezone,
             currency: workspaces.currency,
+            slotStepMinutes: workspaces.slotStepMinutes,
+            minNoticeMinutes: workspaces.minNoticeMinutes,
+            maxDaysAhead: workspaces.maxDaysAhead,
+            cancellationWindowHours: workspaces.cancellationWindowHours,
           },
         })
         .from(memberships)

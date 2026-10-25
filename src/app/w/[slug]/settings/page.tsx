@@ -7,6 +7,7 @@ import {
 } from "@/features/workspaces/permissions";
 import { requireMembership } from "@/lib/auth/session";
 import { currencyOptions, timeZoneOptions } from "@/lib/locale-options";
+import { BookingRulesForm } from "./booking-rules-form";
 import { BusinessDetailsForm } from "./business-details-form";
 import { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
 
@@ -39,6 +40,17 @@ export default async function SettingsPage({
           timeZones={timeZoneOptions()}
           currencies={currencyOptions()}
         />
+      </section>
+
+      <Separator className="my-10" />
+      <section aria-labelledby="booking-rules">
+        <h2 id="booking-rules" className="text-lg font-semibold">
+          Booking rules
+        </h2>
+        <p className="mt-1 mb-6 text-sm text-muted-foreground">
+          How customers can book, cancel and move appointments themselves.
+        </p>
+        <BookingRulesForm slug={workspace.slug} rules={workspace} />
       </section>
 
       {canDeleteWorkspace(membership.role) ? (

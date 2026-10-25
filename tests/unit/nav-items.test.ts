@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { navItems } from "@/components/app-shell/nav-items";
 
 describe("navItems", () => {
-  it("shows staff only the overview and team", () => {
+  it("shows staff the overview, calendar and team", () => {
     expect(navItems("bloom", "staff").map((item) => item.label)).toEqual([
       "Overview",
+      "Calendar",
       "Team",
     ]);
   });
@@ -14,6 +15,7 @@ describe("navItems", () => {
       const items = navItems("bloom", role);
       expect(items.map((item) => item.label)).toEqual([
         "Overview",
+        "Calendar",
         "Services",
         "Staff",
         "Opening hours",
@@ -24,6 +26,7 @@ describe("navItems", () => {
       ]);
       expect(items.map((item) => item.href)).toEqual([
         "/w/bloom",
+        "/w/bloom/calendar",
         "/w/bloom/services",
         "/w/bloom/staff",
         "/w/bloom/hours",

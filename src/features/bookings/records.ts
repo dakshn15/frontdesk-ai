@@ -1,5 +1,8 @@
 import "server-only";
+import { eq } from "drizzle-orm";
 import { type AuthClaims, withRls } from "@/db";
+import { workspaces } from "@/db/schema";
+import type { BookingRules } from "./availability";
 import {
   cancelBooking,
   type CreateResult,
@@ -77,4 +80,20 @@ export function setBookingStatusRecord(
   return withRls(claims, (tx) =>
     setBookingStatus(tx, workspaceId, bookingId, status, claims.sub),
   );
+}
+
+/** Saves the workspace's booking rules. Row level security lets only owners and admins. */
+export async function updateBookingRulesRecord(
+  claims: AuthClaims,
+  workspaceId: string,
+  rules: BookingRules,
+): Promise<"ok" | "not_allowed"> {
+  const updated = await withRls(claims, (tx) =>
+    tx
+      .update(workspaces)
+      .set(rules)
+      .where(eq(workspaces.id, workspaceId))
+      .returning({ id: workspaces.id }),
+  );
+  return updated.length > 0 ? "ok" : "not_allowed";
 }
