@@ -85,6 +85,20 @@
       "when": 1792923515044,
       "tag": "20261025101835_hours_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792925882335,
+      "tag": "20261025105802_policies_answers",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792925892633,
+      "tag": "20261025105812_policies_answers_rules",
+      "breakpoints": true
     }
   ]
 }
