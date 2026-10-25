@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { withRls } from "@/db";
@@ -297,13 +298,70 @@ describe("data rules", () => {
       );
     expect(await read(cara)).toEqual([]);
     expect((await read(ana)).length).toBeGreaterThanOrEqual(1);
-    const edited = await withRls(claimsFor(ana), (tx) =>
-      tx
-        .update(auditLog)
-        .set({ action: "tampered" })
-        .where(eq(auditLog.workspaceId, ws.id))
-        .returning({ id: auditLog.id }),
+    const edit = await pgErrorOf(
+      withRls(claimsFor(ana), (tx) =>
+        tx
+          .update(auditLog)
+          .set({ action: "tampered" })
+          .where(eq(auditLog.workspaceId, ws.id)),
+      ),
     );
-    expect(edited).toEqual([]);
+    expect(edit?.code).toBe("42501");
+  });
+});
+
+// Row policies say who may update a row; these check which columns they may change.
+// Moving a membership to another workspace or user would let an owner join any workspace.
+describe("column limits", () => {
+  it("owners can't move a membership into another workspace", async () => {
+    const { ana, cara, ws } = await team();
+    const outsider = await createTestUser();
+    const other = await createTestWorkspace(outsider);
+    const caraM = await membershipId(ws.id, cara);
+    const err = await pgErrorOf(
+      withRls(claimsFor(ana), (tx) =>
+        tx
+          .update(memberships)
+          .set({ workspaceId: other.id })
+          .where(eq(memberships.id, caraM)),
+      ),
+    );
+    expect(err?.code).toBe("42501");
+    const members = await adminDb
+      .select({ userId: memberships.userId })
+      .from(memberships)
+      .where(eq(memberships.workspaceId, other.id));
+    expect(members).toEqual([{ userId: outsider.id }]);
+  });
+
+  it("owners can't hand a membership to another user", async () => {
+    const { ana, cara, ws } = await team();
+    const outsider = await createTestUser();
+    const caraM = await membershipId(ws.id, cara);
+    const err = await pgErrorOf(
+      withRls(claimsFor(ana), (tx) =>
+        tx
+          .update(memberships)
+          .set({ userId: outsider.id })
+          .where(eq(memberships.id, caraM)),
+      ),
+    );
+    expect(err?.code).toBe("42501");
+  });
+
+  it("admins can change details but not a workspace's URL or creator", async () => {
+    const { ben, cara, ws } = await team();
+    const changes = [
+      { slug: `moved-${randomBytes(4).toString("hex")}` },
+      { createdBy: cara.id },
+    ];
+    for (const change of changes) {
+      const err = await pgErrorOf(
+        withRls(claimsFor(ben), (tx) =>
+          tx.update(workspaces).set(change).where(eq(workspaces.id, ws.id)),
+        ),
+      );
+      expect(err?.code).toBe("42501");
+    }
   });
 });

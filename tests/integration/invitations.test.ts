@@ -266,3 +266,36 @@ describe("previewing invites", () => {
     expect((await preview(accepted.token))[0]?.status).toBe("accepted");
   });
 });
+
+describe("changing invites", () => {
+  it("managers can revoke an invite but not rewrite it", async () => {
+    const { ana, ws } = await team();
+    const invite = await createTestInvite(ws.id, ana, {
+      email: `rewrite-${randomUUID()}@example.com`,
+      role: "staff",
+    });
+    const changes = [
+      { email: `other-${randomUUID()}@example.com` },
+      { expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+    ];
+    for (const change of changes) {
+      const err = await pgErrorOf(
+        withRls(claimsFor(ana), (tx) =>
+          tx
+            .update(invitations)
+            .set(change)
+            .where(eq(invitations.id, invite.id)),
+        ),
+      );
+      expect(err?.code).toBe("42501");
+    }
+    const revoked = await withRls(claimsFor(ana), (tx) =>
+      tx
+        .update(invitations)
+        .set({ revokedAt: new Date() })
+        .where(eq(invitations.id, invite.id))
+        .returning({ id: invitations.id }),
+    );
+    expect(revoked).toEqual([{ id: invite.id }]);
+  });
+});

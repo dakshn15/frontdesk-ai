@@ -36,6 +36,13 @@
       "when": 1792853736382,
       "tag": "20261024145536_invitation_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792913108443,
+      "tag": "20261025072508_column_update_grants",
+      "breakpoints": true
     }
   ]
 }
