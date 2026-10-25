@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CheckboxField, Field, TextareaField } from "@/components/forms/field";
 import { FormMessage } from "@/components/forms/form-message";
@@ -29,6 +29,8 @@ type Props = {
 /** "Add service", or "Edit" on a row when `service` is given. */
 export function ServiceDialog(props: Props) {
   const [open, setOpen] = useState(false);
+  // Stable, so the form's success effect runs once per result.
+  const close = useCallback(() => setOpen(false), []);
   // A new key each time it opens gives a fresh form.
   const [session, setSession] = useState(0);
   const { service } = props;
@@ -61,7 +63,7 @@ export function ServiceDialog(props: Props) {
         </DialogTrigger>
       )}
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <ServiceForm key={session} {...props} onDone={() => setOpen(false)} />
+        <ServiceForm key={session} {...props} onDone={close} />
       </DialogContent>
     </Dialog>
   );

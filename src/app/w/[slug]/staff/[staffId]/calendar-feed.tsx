@@ -1,7 +1,7 @@
 "use client";
 
 import { Copy } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useActionForm } from "@/components/forms/use-action-form";
 import {
@@ -29,6 +29,8 @@ export function CalendarFeed({
   url: string;
 }) {
   const [open, setOpen] = useState(false);
+  // Stable, so the form's success effect runs once per result.
+  const close = useCallback(() => setOpen(false), []);
 
   async function copy() {
     try {
@@ -60,11 +62,7 @@ export function CalendarFeed({
             Reset link
           </AlertDialogTrigger>
           <AlertDialogContent>
-            <ResetForm
-              slug={slug}
-              staffId={staffId}
-              onDone={() => setOpen(false)}
-            />
+            <ResetForm slug={slug} staffId={staffId} onDone={close} />
           </AlertDialogContent>
         </AlertDialog>
       </div>

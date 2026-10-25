@@ -1,7 +1,7 @@
 "use client";
 
 import { Copy, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Field } from "@/components/forms/field";
 import { FormMessage } from "@/components/forms/form-message";
@@ -22,6 +22,8 @@ import { inviteMember } from "@/features/team/actions";
 
 export function InviteDialog({ slug }: { slug: string }) {
   const [open, setOpen] = useState(false);
+  // Stable, so the form's success effect runs once per result.
+  const close = useCallback(() => setOpen(false), []);
   // A new key each time it opens gives a fresh, empty form.
   const [session, setSession] = useState(0);
   return (
@@ -37,7 +39,7 @@ export function InviteDialog({ slug }: { slug: string }) {
         Invite teammate
       </DialogTrigger>
       <DialogContent>
-        <InviteForm key={session} slug={slug} onDone={() => setOpen(false)} />
+        <InviteForm key={session} slug={slug} onDone={close} />
       </DialogContent>
     </Dialog>
   );

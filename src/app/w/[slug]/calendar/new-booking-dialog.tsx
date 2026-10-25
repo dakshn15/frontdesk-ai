@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Field, SelectField, TextareaField } from "@/components/forms/field";
 import { FormMessage } from "@/components/forms/form-message";
@@ -31,6 +31,8 @@ type Props = {
 
 export function NewBookingDialog(props: Props) {
   const [open, setOpen] = useState(false);
+  // Stable, so the form's success effect runs once per result.
+  const close = useCallback(() => setOpen(false), []);
   // A new key each time it opens gives a fresh form.
   const [session, setSession] = useState(0);
   return (
@@ -46,11 +48,7 @@ export function NewBookingDialog(props: Props) {
         New booking
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <NewBookingForm
-          key={session}
-          {...props}
-          onDone={() => setOpen(false)}
-        />
+        <NewBookingForm key={session} {...props} onDone={close} />
       </DialogContent>
     </Dialog>
   );

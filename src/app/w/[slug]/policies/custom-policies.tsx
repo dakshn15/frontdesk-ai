@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Field, TextareaField } from "@/components/forms/field";
 import { FormMessage } from "@/components/forms/form-message";
@@ -75,6 +75,8 @@ export function CustomPolicyDialog({
   policy?: CustomPolicy;
 }) {
   const [open, setOpen] = useState(false);
+  // Stable, so the form's success effect runs once per result.
+  const close = useCallback(() => setOpen(false), []);
   // A new key each time it opens gives a fresh form.
   const [session, setSession] = useState(0);
   return (
@@ -110,7 +112,7 @@ export function CustomPolicyDialog({
           key={session}
           slug={slug}
           policy={policy}
-          onDone={() => setOpen(false)}
+          onDone={close}
         />
       </DialogContent>
     </Dialog>

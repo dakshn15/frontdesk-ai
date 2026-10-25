@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Field, SelectField } from "@/components/forms/field";
 import { FormMessage } from "@/components/forms/form-message";
@@ -67,6 +67,8 @@ export function BookingBlock({
   style: CSSProperties;
 }) {
   const [open, setOpen] = useState(false);
+  // Stable, so the form's success effect runs once per result.
+  const close = useCallback(() => setOpen(false), []);
   const customer = booking.customerName ?? "Deleted customer";
   return (
     <>
@@ -99,7 +101,7 @@ export function BookingBlock({
               booking={booking}
               timeZone={timeZone}
               staff={staff}
-              onDone={() => setOpen(false)}
+              onDone={close}
             />
           ) : null}
         </DialogContent>
