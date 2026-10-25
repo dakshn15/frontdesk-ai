@@ -21,6 +21,8 @@ const serverSchema = z.object({
   // Without a Resend key, emails are written to email_log as not sent.
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(3).default("FrontDesk AI <onboarding@resend.dev>"),
+  // Without an OpenAI key, knowledge is stored without embeddings and searched by keyword.
+  OPENAI_API_KEY: z.string().min(1).optional(),
   ...clientShape,
 });
 
