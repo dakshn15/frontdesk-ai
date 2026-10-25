@@ -45,3 +45,18 @@ export function localDate(timeZone: string, now: Date = new Date()): string {
   // en-CA formats dates as YYYY-MM-DD.
   return new Intl.DateTimeFormat("en-CA", { timeZone }).format(now);
 }
+
+/** A calendar date moved by whole days: ("2026-12-31", 1) → "2027-01-01". */
+export function addDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days))
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** ISO weekday of a calendar date: Monday 1 … Sunday 7. */
+export function isoWeekday(date: string): 1 | 2 | 3 | 4 | 5 | 6 | 7 {
+  const [year, month, day] = date.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return (weekday === 0 ? 7 : weekday) as 1 | 2 | 3 | 4 | 5 | 6 | 7;
+}

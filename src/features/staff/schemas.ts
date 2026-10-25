@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { zonedDateTimeToUtc } from "@/lib/clock";
+import { addDays, zonedDateTimeToUtc } from "@/lib/clock";
 
 const NAME_ERROR = "Use 2 to 80 characters.";
 const ORDER_ERROR = "End must be after start.";
@@ -93,13 +93,6 @@ export const timeOffSchema = z
 
 export type TimeOffInput = z.output<typeof timeOffSchema>;
 
-function nextDay(date: string): string {
-  const [year, month, day] = date.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day + 1))
-    .toISOString()
-    .slice(0, 10);
-}
-
 /** The exact start and end of a time-off entry, in the business's time zone. All day runs to midnight after the end date. */
 export function timeOffRange(
   input: TimeOffInput,
@@ -108,7 +101,7 @@ export function timeOffRange(
   if (input.allDay) {
     return {
       startsAt: zonedDateTimeToUtc(input.startDate, "00:00", timeZone),
-      endsAt: zonedDateTimeToUtc(nextDay(input.endDate), "00:00", timeZone),
+      endsAt: zonedDateTimeToUtc(addDays(input.endDate, 1), "00:00", timeZone),
     };
   }
   return {
