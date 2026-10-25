@@ -3,12 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { type AuthClaims, withRls } from "@/db";
 import { getPgError, PG_UNIQUE_VIOLATION } from "@/db/errors";
 import { services } from "@/db/schema";
-import { getMyRole } from "@/features/workspaces/access";
-import { canEditWorkspace } from "@/features/workspaces/permissions";
+import { assertManager, Refused } from "@/features/workspaces/access";
 import type { ServiceInput } from "./schemas";
-
-/** Thrown inside a transaction to roll it back and report "not_allowed". */
-class Refused extends Error {}
 
 function isDuplicateName(err: unknown): boolean {
   return getPgError(err)?.code === PG_UNIQUE_VIOLATION;
@@ -24,8 +20,7 @@ export async function createServiceRecord(
 > {
   try {
     const id = await withRls(claims, async (tx) => {
-      const role = await getMyRole(tx, claims, workspaceId);
-      if (!role || !canEditWorkspace(role)) throw new Refused();
+      await assertManager(tx, claims, workspaceId);
       const [row] = await tx
         .insert(services)
         .values({ workspaceId, ...input })

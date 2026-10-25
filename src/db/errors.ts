@@ -1,4 +1,5 @@
 export const PG_UNIQUE_VIOLATION = "23505";
+export const PG_FOREIGN_KEY_VIOLATION = "23503";
 export const PG_CHECK_VIOLATION = "23514";
 export const PG_INSUFFICIENT_PRIVILEGE = "42501";
 // `raise exception '<name>'` in our SQL functions uses this code, with the name as the message.

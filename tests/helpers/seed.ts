@@ -77,6 +77,24 @@ export async function createTestService(
   return { id: row.id };
 }
 
+/** Creates a staff profile as `owner`, through row level security. */
+export async function createTestStaff(
+  workspaceId: string,
+  owner: TestUser,
+  opts: { name?: string; userId?: string } = {},
+): Promise<{ id: string }> {
+  const name = opts.name ?? `Staff ${randomBytes(3).toString("hex")}`;
+  const [row] = await asUser(
+    owner.id,
+    (tx) =>
+      tx<{ id: string }[]>`
+        insert into public.staff (workspace_id, name, user_id)
+        values (${workspaceId}, ${name}, ${opts.userId ?? null})
+        returning id`,
+  );
+  return { id: row.id };
+}
+
 /** Creates an invite as `invitedBy`, through row level security, and returns its raw token. */
 export async function createTestInvite(
   workspaceId: string,
