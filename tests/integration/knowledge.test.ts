@@ -179,6 +179,26 @@ describe("search", () => {
     expect(contents[0]).toBe("Parking is free.");
   });
 
+  it("matches a question even when some of its words aren't in the text", async () => {
+    const { owner, ws } = await team();
+    const id = await addText(owner, ws.id, "About us");
+    await addChunks(ws.id, id, [
+      { content: "Free parking behind the salon." },
+      { content: "Parking for bikes is at the back." },
+      { content: "We do bridal hair." },
+    ]);
+    const found = await search(
+      owner,
+      ws.id,
+      "is there free parking for my car?",
+    );
+    // Passages matching more of the question rank higher.
+    expect(found.map((p) => p.content)).toEqual([
+      "Free parking behind the salon.",
+      "Parking for bikes is at the back.",
+    ]);
+  });
+
   it("returns nothing for an empty query", async () => {
     const { owner, ws } = await team();
     expect(await search(owner, ws.id, "   ")).toEqual([]);

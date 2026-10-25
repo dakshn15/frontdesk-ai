@@ -37,7 +37,9 @@ export async function searchKnowledge(
   const text = query.trim().slice(0, 500);
   if (!text) return [];
   const { queryEmbedding, limit = 6 } = options;
-  const tsquery = sql`websearch_to_tsquery('english', ${text})`;
+  // websearch_to_tsquery joins words with AND; a question has words the answer won't, so
+  // match any of them (OR) and let the ranking prefer passages that match more.
+  const tsquery = sql`replace(websearch_to_tsquery('english', ${text})::text, '&', '|')::tsquery`;
 
   const keywordHits = await tx
     .select({ id: knowledgeChunks.id })

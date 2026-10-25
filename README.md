@@ -2,7 +2,7 @@
 
 An AI receptionist for service businesses like salons and spas. It answers customers from the business's own data, books appointments into a real calendar, captures leads, and hands the chat to a person when it isn't sure. Built to show production-grade work: multi-tenant data protected by Postgres row level security, tested end to end, and deployed.
 
-**Status:** milestone 3 of 12. Accounts, workspaces, roles, team invites and the app shell are done. Owners enter the business facts the receptionist will answer from (services, staff with their hours and time off, opening hours, closed days, policies and verified answers), and book appointments in a dashboard calendar that can never double-book. Customers get a confirmation email with a calendar file and a link to cancel or reschedule, and each staff member has a private calendar feed. The receptionist itself arrives in later milestones (see [the design](docs/superpowers/specs/2026-10-24-frontdesk-ai-design.md)).
+**Status:** milestone 4 of 12. Accounts, workspaces, roles, team invites and the app shell are done. Owners enter the business facts the receptionist will answer from (services, staff with their hours and time off, opening hours, closed days, policies and verified answers), and book appointments in a dashboard calendar that can never double-book. Customers get a confirmation email with a calendar file and a link to cancel or reschedule, and each staff member has a private calendar feed. Owners can add knowledge (PDF, Word, text or Markdown files, web pages, whole sites through their sitemap, or pasted text), which is split into passages, embedded and searched with hybrid vector and keyword search. Customers get a reminder email the day before. The receptionist itself arrives in later milestones (see [the design](docs/superpowers/specs/2026-10-24-frontdesk-ai-design.md)).
 
 ## Run it locally
 
@@ -49,6 +49,8 @@ tests/              unit, integration and e2e tests, plus shared test helpers
 2. Create a Supabase project. In Authentication, set the Site URL to the Vercel URL and add `<vercel url>/**` to the redirect URLs, and paste the two templates from `supabase/templates/` with their subjects from `supabase/config.toml`. Then run `npx supabase login`, `npx supabase link --project-ref <ref>` and `npx supabase db push`.
 3. Import the repository in Vercel and set `DATABASE_URL` (the transaction pooler connection string, port 6543), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL` (the production URL) and `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=false`.
 4. Optional, booking emails: create a Resend account, then set `RESEND_API_KEY` and `EMAIL_FROM` in Vercel. Without them, emails are recorded in the `email_log` table and not sent. Resend's test sender only delivers to your own address; to email customers, verify a domain you own in Resend.
+   - For reminders, set `CRON_SECRET` to any random string of 16+ characters; `vercel.json` schedules the daily job.
+   - For knowledge embeddings, set `OPENAI_API_KEY` (set a monthly spend limit in OpenAI first). Without it, knowledge search uses keywords only.
 5. Optional, Google sign-in: create a Google Cloud OAuth client with the redirect URI `https://<project ref>.supabase.co/auth/v1/callback`, enable the Google provider in Supabase, then set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true` in Vercel and redeploy.
 
 Account emails (sign-up, password reset) still use Supabase's built-in email, which only reaches the project's own team members until custom SMTP is set up.

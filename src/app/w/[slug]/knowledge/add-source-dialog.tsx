@@ -79,7 +79,7 @@ function AddSourceForm({ slug, onDone }: { slug: string; onDone: () => void }) {
 
       <fieldset>
         <legend className="sr-only">What are you adding?</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2">
           {KINDS.map((option) => (
             <label
               key={option.kind}
