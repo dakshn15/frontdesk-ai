@@ -12,6 +12,8 @@ import { signIn } from "./helpers/auth";
 test.afterAll(cleanupTestData);
 
 test("an owner sets up a staff member", async ({ page }) => {
+  // The longest flow in the suite: about 15 seconds against a production build.
+  test.slow();
   const owner = await createTestUser();
   const ws = await createTestWorkspace(owner);
   await createTestService(ws.id, owner, { name: "Balayage" });

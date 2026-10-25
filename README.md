@@ -2,7 +2,7 @@
 
 An AI receptionist for service businesses like salons and spas. It answers customers from the business's own data, books appointments into a real calendar, captures leads, and hands the chat to a person when it isn't sure. Built to show production-grade work: multi-tenant data protected by Postgres row level security, tested end to end, and deployed.
 
-**Status:** milestone 1 of 12, the foundation. Accounts, workspaces, roles, team invites and the app shell are done. The receptionist itself arrives in later milestones (see [the design](docs/superpowers/specs/2026-10-24-frontdesk-ai-design.md)).
+**Status:** milestone 2 of 12. Accounts, workspaces, roles, team invites and the app shell are done, and owners can now enter the business facts the receptionist will answer from: services with prices, staff with their services, hours and time off, opening hours and closed days, policies, and verified answers, with a setup checklist on the overview. The receptionist itself arrives in later milestones (see [the design](docs/superpowers/specs/2026-10-24-frontdesk-ai-design.md)).
 
 ## Run it locally
 
