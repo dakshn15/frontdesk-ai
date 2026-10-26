@@ -16,12 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
 import { createdAt } from "./columns";
-import {
-  aiProvider,
-  conversationChannel,
-  conversationStatus,
-  messageRole,
-} from "./enums";
+import { conversationChannel, conversationStatus, messageRole } from "./enums";
 import { isMember } from "./rls";
 import { workspaces } from "./workspaces";
 

@@ -303,10 +303,10 @@ describe("tools", () => {
     const { cut, maya } = await bookable(owner, ws.id);
     const tools = toolsFor(ws.id, conversationId);
     const day = addDays(localDate(TZ), 7);
-    const available = await tools.check_availability.execute!(
+    const available = (await tools.check_availability.execute!(
       { serviceId: cut, fromDate: day, days: 1 },
       options,
-    );
+    )) as { slots: { startsAt: string }[] };
     expect(available.slots.length).toBeGreaterThan(0);
     const first = available.slots[0];
     const proposal = await tools.propose_booking.execute!(
@@ -408,7 +408,8 @@ describe("tools", () => {
       ),
     ];
     // The same reply every time, so it reveals nothing about who has a booking.
-    expect(new Set(replies.map((r) => r.message)).size).toBe(1);
+    const messagesSent = replies.map((r) => (r as { message: string }).message);
+    expect(new Set(messagesSent).size).toBe(1);
     const sent = await adminDb
       .select({ to: emailLog.toEmail, text: emailLog.text })
       .from(emailLog)
