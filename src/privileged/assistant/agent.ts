@@ -56,7 +56,7 @@ function fixed(text: string, conversationId: string): AgentResult {
   };
 }
 
-async function saveMessage(
+export async function saveMessage(
   workspaceId: string,
   conversationId: string,
   role: "visitor" | "ai",

@@ -1,6 +1,12 @@
 import "server-only";
 import { z } from "zod";
 import { allowRequest } from "../rate-limit";
+import {
+  foreignOrigin,
+  fromOtherSite,
+  getWidgetConfig,
+  siteAllowed,
+} from "../widget/guard";
 import { MAX_MESSAGE_CHARS, runAgent } from "./agent";
 import {
   createVisitorSession,
@@ -17,8 +23,9 @@ export const LIMITS = {
   previewPerUser: { limit: 30, windowSeconds: 600 },
 } as const;
 
-const json = (body: object, status = 200) => Response.json(body, { status });
-const tooMany = () =>
+export const json = (body: object, status = 200) =>
+  Response.json(body, { status });
+export const tooMany = () =>
   json(
     {
       error:
@@ -34,7 +41,7 @@ export function clientIp(request: Request): string {
   );
 }
 
-async function readJson(request: Request): Promise<unknown> {
+export async function readJson(request: Request): Promise<unknown> {
   try {
     return await request.json();
   } catch {
@@ -42,9 +49,14 @@ async function readJson(request: Request): Promise<unknown> {
   }
 }
 
-const sessionBody = z.object({ workspace: z.string().min(1).max(64) });
+const sessionBody = z.object({
+  workspace: z.string().min(1).max(64),
+  // The website the widget is on, as the widget page sees its parent.
+  host: z.string().max(253).optional(),
+});
 
 export async function handleSession(request: Request): Promise<Response> {
+  if (foreignOrigin(request)) return fromOtherSite();
   const body = sessionBody.safeParse(await readJson(request));
   if (!body.success) return json({ error: "Send the workspace." }, 400);
   const { limit, windowSeconds } = LIMITS.sessionsPerIp;
@@ -56,6 +68,11 @@ export async function handleSession(request: Request): Promise<Response> {
     ))
   ) {
     return tooMany();
+  }
+  const config = await getWidgetConfig(body.data.workspace);
+  if (!config) return json({ error: "That workspace doesn't exist." }, 404);
+  if (!siteAllowed(request, body.data.host, config.allowedDomains)) {
+    return fromOtherSite();
   }
   const session = await createVisitorSession(body.data.workspace);
   if (!session) return json({ error: "That workspace doesn't exist." }, 404);
@@ -73,6 +90,7 @@ const messageBody = z.object({
 const chatBody = messageBody.extend({ token: z.string().min(1).max(100) });
 
 export async function handleChat(request: Request): Promise<Response> {
+  if (foreignOrigin(request)) return fromOtherSite();
   const body = chatBody.safeParse(await readJson(request));
   if (!body.success)
     return json({ error: "Send a message of up to 2,000 characters." }, 400);
