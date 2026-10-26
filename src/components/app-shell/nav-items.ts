@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Bot,
   CalendarDays,
   Clock,
   LayoutDashboard,
@@ -35,6 +36,7 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     { label: "Policies", href: `${base}/policies`, icon: ScrollText },
     { label: "Answers", href: `${base}/answers`, icon: MessageSquareText },
     { label: "Knowledge", href: `${base}/knowledge`, icon: BookOpen },
+    { label: "Assistant", href: `${base}/assistant`, icon: Bot },
     team,
     { label: "Settings", href: `${base}/settings`, icon: Settings },
   ];

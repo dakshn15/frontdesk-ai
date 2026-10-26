@@ -8,6 +8,7 @@ import {
 import { requireMembership } from "@/lib/auth/session";
 import { currencyOptions, timeZoneOptions } from "@/lib/locale-options";
 import { BookingRulesForm } from "./booking-rules-form";
+import { ReceptionistForm } from "./receptionist-form";
 import { BusinessDetailsForm } from "./business-details-form";
 import { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
 
@@ -39,6 +40,21 @@ export default async function SettingsPage({
           details={workspace}
           timeZones={timeZoneOptions()}
           currencies={currencyOptions()}
+        />
+      </section>
+
+      <Separator className="my-10" />
+      <section aria-labelledby="receptionist">
+        <h2 id="receptionist" className="text-lg font-semibold">
+          Receptionist
+        </h2>
+        <p className="mt-1 mb-6 text-sm text-muted-foreground">
+          How the AI receptionist introduces itself, and which AI answers.
+        </p>
+        <ReceptionistForm
+          slug={workspace.slug}
+          assistantName={workspace.assistantName}
+          aiProvider={workspace.aiProvider}
         />
       </section>
 

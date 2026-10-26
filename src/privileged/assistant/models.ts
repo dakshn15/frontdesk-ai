@@ -73,3 +73,8 @@ export function chooseModel(
   });
   return { model, provider: first, modelId: MODEL_IDS[first], onFallback };
 }
+
+/** Whether the receptionist can answer at all (a key is set, or the scripted test model). */
+export function assistantReady(): boolean {
+  return chooseModel("openai") !== null;
+}

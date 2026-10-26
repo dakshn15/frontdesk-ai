@@ -27,6 +27,8 @@ export default defineConfig({
     command: process.env.CI ? "npm run start" : "npm run dev",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
+    // The receptionist answers with a scripted model in tests (never on Vercel).
+    env: { ...(process.env as Record<string, string>), AI_FAKE: "1" },
     timeout: 120_000,
   },
 });
