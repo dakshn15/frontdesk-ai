@@ -12,3 +12,4 @@ export * from "./policies";
 export * from "./answers";
 export * from "./bookings";
 export * from "./knowledge";
+export * from "./conversations";

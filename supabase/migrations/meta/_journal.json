@@ -141,6 +141,20 @@
       "when": 1792935775376,
       "tag": "20261025134255_booking_reminders_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793024626499,
+      "tag": "20261026142346_conversations",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793024638098,
+      "tag": "20261026142358_conversations_rules",
+      "breakpoints": true
     }
   ]
 }

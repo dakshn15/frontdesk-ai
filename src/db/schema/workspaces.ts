@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
 import { createdAt, updatedAt } from "./columns";
+import { aiProvider } from "./enums";
 import { profiles } from "./profiles";
 
 // Created only through private.create_workspace, which also makes the caller its owner.
@@ -28,6 +29,9 @@ export const workspaces = pgTable(
     minNoticeMinutes: integer().notNull().default(120),
     maxDaysAhead: smallint().notNull().default(60),
     cancellationWindowHours: smallint().notNull().default(24),
+    // The receptionist: its name in the chat and which AI provider answers first.
+    assistantName: text().notNull().default("Assistant"),
+    aiProvider: aiProvider().notNull().default("openai"),
     createdBy: uuid().references(() => profiles.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -40,6 +44,10 @@ export const workspaces = pgTable(
     check(
       "workspaces_slug_format",
       sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(${t.slug}) between 3 and 48`,
+    ),
+    check(
+      "workspaces_assistant_name_length",
+      sql`char_length(${t.assistantName}) between 1 and 40`,
     ),
     check("workspaces_currency_format", sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check(

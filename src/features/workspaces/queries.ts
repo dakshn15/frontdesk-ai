@@ -18,6 +18,8 @@ export type Membership = {
     minNoticeMinutes: number;
     maxDaysAhead: number;
     cancellationWindowHours: number;
+    assistantName: string;
+    aiProvider: "openai" | "google";
   };
 };
 
@@ -58,6 +60,8 @@ export const getMembershipBySlug = cache(
             minNoticeMinutes: workspaces.minNoticeMinutes,
             maxDaysAhead: workspaces.maxDaysAhead,
             cancellationWindowHours: workspaces.cancellationWindowHours,
+            assistantName: workspaces.assistantName,
+            aiProvider: workspaces.aiProvider,
           },
         })
         .from(memberships)

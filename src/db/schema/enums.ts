@@ -54,3 +54,25 @@ export const knowledgeStatus = pgEnum("knowledge_status", [
 ]);
 
 export type KnowledgeStatus = (typeof knowledgeStatus.enumValues)[number];
+
+export const aiProvider = pgEnum("ai_provider", ["openai", "google"]);
+
+export type AiProvider = (typeof aiProvider.enumValues)[number];
+
+// Where a conversation happens: the website widget, or the owner's dashboard preview.
+export const conversationChannel = pgEnum("conversation_channel", [
+  "widget",
+  "preview",
+]);
+
+// ai: the receptionist is answering; needs_human: it handed off; human: a person took over.
+export const conversationStatus = pgEnum("conversation_status", [
+  "ai",
+  "needs_human",
+  "human",
+  "resolved",
+]);
+
+export type ConversationStatus = (typeof conversationStatus.enumValues)[number];
+
+export const messageRole = pgEnum("message_role", ["visitor", "ai", "staff"]);
