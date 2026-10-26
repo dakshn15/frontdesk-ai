@@ -33,7 +33,7 @@ export type AgentResult = {
 };
 
 /** A one-message UI stream, for replies that don't come from the model. */
-function fixed(text: string): AgentResult {
+function fixed(text: string, conversationId: string): AgentResult {
   return {
     fixedReply: text,
     done: Promise.resolve(),
@@ -42,6 +42,10 @@ function fixed(text: string): AgentResult {
         headers,
         stream: createUIMessageStream({
           execute: ({ writer }) => {
+            writer.write({
+              type: "message-metadata",
+              messageMetadata: { conversationId, sources: [] },
+            });
             if (!text) return;
             writer.write({ type: "text-start", id: "reply" });
             writer.write({ type: "text-delta", id: "reply", delta: text });
@@ -109,14 +113,14 @@ export async function runAgent(input: {
     input.text.slice(0, MAX_MESSAGE_CHARS),
   );
   // A person has taken over: the receptionist stays quiet (milestone 7 shows their replies).
-  if (workspace.status === "human") return fixed("");
+  if (workspace.status === "human") return fixed("", conversationId);
 
   const choice = input.model
     ? { ...input.model, onFallback: () => {} }
     : chooseModel(workspace.aiProvider);
   if (!choice) {
     await saveMessage(workspaceId, conversationId, "ai", UNAVAILABLE_REPLY);
-    return fixed(UNAVAILABLE_REPLY);
+    return fixed(UNAVAILABLE_REPLY, conversationId);
   }
   let provider = choice.provider;
   let modelId = choice.modelId;
@@ -214,10 +218,13 @@ export async function runAgent(input: {
         headers,
         stream: toUIMessageStream({
           stream: result.stream,
+          // The browser learns which conversation it's in, then what the answer used.
           messageMetadata: ({ part }) =>
-            part.type === "finish"
-              ? { sources: [...sources.values()] }
-              : undefined,
+            part.type === "start"
+              ? { conversationId, sources: [] }
+              : part.type === "finish"
+                ? { conversationId, sources: [...sources.values()] }
+                : undefined,
         }),
       }),
   };
