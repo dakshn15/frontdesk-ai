@@ -4,6 +4,7 @@ import {
   hostAllowed,
   normalizeDomain,
 } from "@/features/widget/domains";
+import { textOn } from "@/features/widget/client";
 import { widgetSettingsSchema } from "@/features/widget/schemas";
 
 describe("normalizeDomain", () => {
@@ -90,5 +91,14 @@ describe("widgetSettingsSchema", () => {
       allowedDomains:
         "“not a domain” isn't a domain. Use one like bloomsalon.com.",
     });
+  });
+});
+
+describe("textOn", () => {
+  it("picks white on dark colours and near-black on light ones", () => {
+    expect(textOn("#0f766e")).toBe("#ffffff");
+    expect(textOn("#1d4ed8")).toBe("#ffffff");
+    expect(textOn("#fde047")).toBe("#111827");
+    expect(textOn("#ffffff")).toBe("#111827");
   });
 });

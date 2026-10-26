@@ -27,6 +27,7 @@ export async function getWidgetConfig(slug: string) {
       name: workspaces.name,
       slug: workspaces.slug,
       assistantName: workspaces.assistantName,
+      timeZone: workspaces.timezone,
       color: workspaces.widgetColor,
       greeting: workspaces.widgetGreeting,
       suggestions: workspaces.widgetSuggestions,

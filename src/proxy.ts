@@ -2,11 +2,29 @@ import { type NextRequest, NextResponse } from "next/server";
 import { LAST_WORKSPACE_COOKIE } from "@/lib/auth/home";
 import { authReturnRedirect, routeDecision } from "@/lib/auth/routing";
 import { updateSession } from "@/lib/supabase/proxy";
+import { frameAncestors } from "@/features/widget/domains";
+import { getWidgetConfig } from "@/privileged/widget/guard";
 
 const CACHE_HEADERS = ["cache-control", "expires", "pragma"];
 const WORKSPACE_PATH = /^\/w\/([a-z0-9-]+)(?:\/|$)/;
 
+// Public chat routes have no signed-in user, so they skip the Supabase session refresh.
+const PUBLIC_CHAT = /^\/(?:embed\.js$|api\/chat(?:\/|$)|api\/widget\/)/;
+const WIDGET_PAGE = /^\/widget\/([a-z0-9-]+)\/?$/;
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (PUBLIC_CHAT.test(pathname)) return NextResponse.next();
+  const widget = WIDGET_PAGE.exec(pathname)?.[1];
+  if (widget) {
+    // Only the business's own sites may show its chat.
+    const response = NextResponse.next();
+    const config = await getWidgetConfig(widget);
+    const policy = config ? frameAncestors(config.allowedDomains) : null;
+    if (policy) response.headers.set("content-security-policy", policy);
+    return response;
+  }
+
   const { response, isSignedIn } = await updateSession(request);
   const authReturn = authReturnRedirect(
     request.nextUrl.pathname,

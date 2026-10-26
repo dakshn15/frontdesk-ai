@@ -85,6 +85,49 @@ describe("fakeModel", () => {
     });
     expect(await result.text).toBe("Free parking behind the salon.");
   });
+
+  it("offers the first free time when asked to book", async () => {
+    const calls: string[] = [];
+    const record =
+      <T>(name: string, output: T) =>
+      async (input: unknown) => {
+        calls.push(`${name} ${JSON.stringify(input)}`);
+        return output;
+      };
+    const result = streamText({
+      model: fakeModel(),
+      prompt: "Can I book a cut?",
+      tools: {
+        get_services: tool({
+          inputSchema: z.object({}),
+          execute: record("get_services", { services: [{ id: "svc" }] }),
+        }),
+        check_availability: tool({
+          inputSchema: z.object({ serviceId: z.string(), days: z.number() }),
+          execute: record("check_availability", {
+            slots: [{ staffId: "maya", startsAt: "2026-11-02T15:00:00.000Z" }],
+          }),
+        }),
+        propose_booking: tool({
+          inputSchema: z.object({
+            serviceId: z.string(),
+            staffId: z.string(),
+            startsAt: z.string(),
+          }),
+          execute: record("propose_booking", { ok: true }),
+        }),
+      },
+      stopWhen: () => false,
+    });
+    expect(await result.text).toBe(
+      "Here's the next free time. Confirm it below to book.",
+    );
+    expect(calls).toEqual([
+      "get_services {}",
+      'check_availability {"serviceId":"svc","days":7}',
+      'propose_booking {"serviceId":"svc","staffId":"maya","startsAt":"2026-11-02T15:00:00.000Z"}',
+    ]);
+  });
 });
 
 describe("buildInstructions", () => {

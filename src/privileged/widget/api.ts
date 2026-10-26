@@ -29,6 +29,15 @@ export const WIDGET_LIMITS = {
   leadsPerSession: { limit: 5, windowSeconds: 3600 },
 } as const;
 
+// The booking form's rules, worded for the visitor filling it in.
+const visitorDetails = customerSchema.extend({
+  name: z
+    .string({ error: "Add your name." })
+    .trim()
+    .min(1, { error: "Add your name." })
+    .max(120, { error: "Use 120 characters or fewer." }),
+});
+
 const HISTORY = 50;
 const token = z.string().min(1).max(100);
 const expired = () =>
@@ -114,7 +123,7 @@ export async function handleBook(request: Request): Promise<Response> {
   const started = await start(request, bookBody);
   if (started instanceof Response) return started;
   const { body, session } = started;
-  const customer = customerSchema.safeParse({
+  const customer = visitorDetails.safeParse({
     name: body.name,
     email: body.email,
     phone: body.phone ?? "",
@@ -210,7 +219,7 @@ const leadBody = z.object({
   message: z.unknown().optional(),
 });
 
-const leadDetails = customerSchema.extend({
+const leadDetails = visitorDetails.extend({
   message: z
     .string()
     .trim()

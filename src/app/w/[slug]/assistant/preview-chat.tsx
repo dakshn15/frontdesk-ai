@@ -31,6 +31,28 @@ function toolsUsed(message: ChatMessage): string[] {
   return [...new Set(names)];
 }
 
+type Offer = {
+  serviceName: string;
+  staffId: string;
+  staffName: string;
+  startsAt: string;
+  label: string;
+  duration: string;
+  price: string;
+};
+
+/** Booking cards the receptionist offered in one answer. */
+function offers(message: ChatMessage): Offer[] {
+  return message.parts.flatMap((part) => {
+    if (part.type !== "tool-propose_booking") return [];
+    const { state, output } = part as { state?: string; output?: unknown };
+    const result = output as { ok?: boolean; card?: Offer } | undefined;
+    return state === "output-available" && result?.ok && result.card
+      ? [result.card]
+      : [];
+  });
+}
+
 export function PreviewChat({
   slug,
   assistantName,
@@ -126,6 +148,21 @@ export function PreviewChat({
               >
                 {text || (busy ? "…" : "")}
               </p>
+              {offers(message).map((offer) => (
+                <div
+                  key={`${offer.staffId}:${offer.startsAt}`}
+                  className="rounded-xl border p-3 text-sm"
+                >
+                  <p className="font-medium">
+                    {offer.serviceName} with {offer.staffName}
+                  </p>
+                  <p>{offer.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {offer.duration} · {offer.price}. Customers confirm this
+                    card in the website chat.
+                  </p>
+                </div>
+              ))}
               {sources.length > 0 ? (
                 <div aria-label="Sources" className="flex flex-wrap gap-1">
                   {sources.map((source) => (
