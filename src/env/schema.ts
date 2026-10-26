@@ -25,6 +25,10 @@ const serverSchema = z.object({
   EMAIL_FROM: z.string().min(3).default("FrontDesk AI <onboarding@resend.dev>"),
   // Without an OpenAI key, knowledge is stored without embeddings and searched by keyword.
   OPENAI_API_KEY: z.string().min(1).optional(),
+  // Optional second provider; the receptionist falls back to it if the first fails.
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+  // "1" swaps in a scripted model for end-to-end tests. Ignored on Vercel.
+  AI_FAKE: z.enum(["0", "1"]).default("0"),
   ...clientShape,
 });
 
