@@ -9,13 +9,14 @@ import { createSecretToken } from "@/lib/secret-token";
 import { sendEmail } from "./mailer";
 
 export type BookingEmailKind =
-  "confirmed" | "rescheduled" | "cancelled" | "reminder";
+  "confirmed" | "rescheduled" | "cancelled" | "reminder" | "link";
 
 const SUBJECT: Record<BookingEmailKind, string> = {
   confirmed: "is booked",
   rescheduled: "has moved",
   cancelled: "is cancelled",
   reminder: "is coming up",
+  link: "and how to change it",
 };
 
 const INTRO: Record<BookingEmailKind, string> = {
@@ -23,6 +24,7 @@ const INTRO: Record<BookingEmailKind, string> = {
   rescheduled: "Your appointment has a new time.",
   cancelled: "Your appointment has been cancelled.",
   reminder: "A reminder of your appointment.",
+  link: "Here's the link to cancel or change your appointment.",
 };
 
 // Reminders carry no new link, so the one in the booking email keeps working.
@@ -125,7 +127,7 @@ export async function sendBookingEmail(input: {
     .where(eq(bookings.id, input.bookingId));
   if (!booking) return;
 
-  const withLink = input.kind === "confirmed" || input.kind === "rescheduled";
+  const withLink = input.kind !== "cancelled" && input.kind !== "reminder";
   const token = withLink
     ? (input.manageToken ?? (await rotateManageToken(input.bookingId)))
     : undefined;
@@ -164,7 +166,7 @@ export async function sendBookingEmail(input: {
     ...content,
     // The calendar already has the appointment by the time a reminder goes out.
     attachments:
-      input.kind === "reminder"
+      input.kind === "reminder" || input.kind === "link"
         ? undefined
         : [
             {

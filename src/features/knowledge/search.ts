@@ -12,6 +12,8 @@ export type Passage = {
   content: string;
   pageUrl: string | null;
   score: number;
+  /** Whether the passage matched the query's words (not only its meaning). */
+  keyword: boolean;
 };
 
 const CANDIDATES = 20;
@@ -93,8 +95,9 @@ export async function searchKnowledge(
       ),
     );
   const byId = new Map(rows.map((row) => [row.chunkId, row]));
+  const keywordIds = new Set(keywordHits.map((hit) => hit.id));
   return ranked.flatMap(({ id, score }) => {
     const row = byId.get(id);
-    return row ? [{ ...row, score }] : [];
+    return row ? [{ ...row, score, keyword: keywordIds.has(id) }] : [];
   });
 }
