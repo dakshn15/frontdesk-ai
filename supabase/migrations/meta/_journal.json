@@ -155,6 +155,20 @@
       "when": 1793024638098,
       "tag": "20261026142358_conversations_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793027114976,
+      "tag": "20261026150514_widget",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793027122506,
+      "tag": "20261026150522_widget_rules",
+      "breakpoints": true
     }
   ]
 }

@@ -282,7 +282,7 @@ export async function insertBooking(
   tx: RlsTx,
   workspaceId: string,
   input: NewBooking,
-  actor: Actor & { source: "dashboard" | "customer" },
+  actor: Actor & { source: "dashboard" | "customer" | "widget" },
 ): Promise<CreateResult> {
   const ws = await loadWorkspaceRules(tx, workspaceId);
   if (!ws) return { ok: false, error: "not_allowed" };

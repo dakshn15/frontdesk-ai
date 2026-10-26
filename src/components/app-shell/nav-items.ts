@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Clock,
   LayoutDashboard,
+  MessageCircle,
   type LucideIcon,
   MessageSquareText,
   ScrollText,
@@ -37,6 +38,7 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     { label: "Answers", href: `${base}/answers`, icon: MessageSquareText },
     { label: "Knowledge", href: `${base}/knowledge`, icon: BookOpen },
     { label: "Assistant", href: `${base}/assistant`, icon: Bot },
+    { label: "Widget", href: `${base}/widget`, icon: MessageCircle },
     team,
     { label: "Settings", href: `${base}/settings`, icon: Settings },
   ];

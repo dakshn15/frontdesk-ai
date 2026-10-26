@@ -32,6 +32,21 @@ export const workspaces = pgTable(
     // The receptionist: its name in the chat and which AI provider answers first.
     assistantName: text().notNull().default("Assistant"),
     aiProvider: aiProvider().notNull().default("openai"),
+    // The website chat: its colour, greeting, suggested questions and corner, and the
+    // sites it may load on (an empty list means any site).
+    widgetColor: text().notNull().default("#0f766e"),
+    widgetGreeting: text()
+      .notNull()
+      .default("Hi, how can I help? Ask a question or book an appointment."),
+    widgetSuggestions: text()
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    widgetPosition: text().notNull().default("right"),
+    allowedDomains: text()
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     createdBy: uuid().references(() => profiles.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -48,6 +63,10 @@ export const workspaces = pgTable(
     check(
       "workspaces_assistant_name_length",
       sql`char_length(${t.assistantName}) between 1 and 40`,
+    ),
+    check(
+      "workspaces_widget_settings",
+      sql`${t.widgetColor} ~ '^#[0-9a-f]{6}$' and char_length(${t.widgetGreeting}) between 1 and 300 and cardinality(${t.widgetSuggestions}) <= 4 and ${t.widgetPosition} in ('right', 'left') and cardinality(${t.allowedDomains}) <= 10`,
     ),
     check("workspaces_currency_format", sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check(

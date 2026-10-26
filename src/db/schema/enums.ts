@@ -30,10 +30,12 @@ export const bookingStatus = pgEnum("booking_status", [
 
 export type BookingStatus = (typeof bookingStatus.enumValues)[number];
 
-// Who made the booking: someone in the dashboard, or the customer (manage link, later the widget).
+// Who made the booking: someone in the dashboard, the customer through a manage link, or
+// the customer confirming a booking card in the website chat.
 export const bookingSource = pgEnum("booking_source", [
   "dashboard",
   "customer",
+  "widget",
 ]);
 
 // Where a knowledge source's text comes from.
