@@ -29,6 +29,13 @@ const SCRIPT = `(function () {
   }
   size();
   window.addEventListener("resize", size);
+  // Commands for the chat wait until it has said it's ready.
+  var ready = false;
+  var queue = [];
+  function send(message) {
+    if (ready) frame.contentWindow.postMessage(message, origin);
+    else queue.push(message);
+  }
   window.addEventListener("message", function (event) {
     if (event.origin !== origin || event.source !== frame.contentWindow) return;
     var data = event.data;
@@ -36,7 +43,16 @@ const SCRIPT = `(function () {
     state.open = data.open === true;
     state.position = data.position === "left" ? "left" : "right";
     size();
+    if (!ready) {
+      ready = true;
+      while (queue.length) frame.contentWindow.postMessage(queue.shift(), origin);
+    }
   });
+  // For the page around the chat: open it, or open it and ask a question.
+  window.FrontDesk = {
+    open: function () { send({ type: "frontdesk:open" }); },
+    ask: function (text) { send({ type: "frontdesk:ask", text: String(text).slice(0, 500) }); }
+  };
   (document.body || document.documentElement).appendChild(frame);
 })();
 `;

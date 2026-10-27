@@ -1,7 +1,8 @@
 import "server-only";
 import { and, count, eq, gt, inArray, isNotNull, lte, sql } from "drizzle-orm";
 import { adminDb } from "@/db/admin";
-import { memberships, workspaces } from "@/db/schema";
+import { memberships, profiles, workspaces } from "@/db/schema";
+import { DEMO_GUEST_NAME } from "@/features/demo/content";
 import { allowRequest } from "../rate-limit";
 import { DEMO_LIMITS } from "./limits";
 import { seedDemoWorkspace } from "./seed";
@@ -20,18 +21,8 @@ export async function startSandbox(
 ): Promise<SandboxResult> {
   if (!input.isAnonymous) return { ok: false, error: "not_anonymous" };
   const now = options.now ?? new Date();
-  const [existing] = await adminDb
-    .select({ slug: workspaces.slug })
-    .from(memberships)
-    .innerJoin(workspaces, eq(workspaces.id, memberships.workspaceId))
-    .where(
-      and(
-        eq(memberships.userId, input.userId),
-        gt(workspaces.demoExpiresAt, now),
-      ),
-    )
-    .limit(1);
-  if (existing) return { ok: true, slug: existing.slug };
+  const existing = await liveSandboxSlug(input.userId, now);
+  if (existing) return { ok: true, slug: existing };
 
   const [{ live }] = await adminDb
     .select({ live: count() })
@@ -47,6 +38,11 @@ export async function startSandbox(
     now.getTime() + DEMO_LIMITS.lifetimeHours * 3_600_000,
   );
   const { slug } = await seedDemoWorkspace(input.userId, expiresAt, now);
+  // The guest plays the salon's front-desk manager, so their replies carry a name.
+  await adminDb
+    .update(profiles)
+    .set({ fullName: DEMO_GUEST_NAME })
+    .where(and(eq(profiles.id, input.userId), eq(profiles.fullName, "")));
   return { ok: true, slug };
 }
 
@@ -79,4 +75,20 @@ export async function cleanupSandboxes(now = new Date()): Promise<number> {
         and not exists (select 1 from public.memberships m where m.user_id = u.id)`);
   }
   return ids.length;
+}
+
+/** The slug of this user's live sandbox, if they have one. */
+export async function liveSandboxSlug(
+  userId: string,
+  now = new Date(),
+): Promise<string | null> {
+  const [row] = await adminDb
+    .select({ slug: workspaces.slug })
+    .from(memberships)
+    .innerJoin(workspaces, eq(workspaces.id, memberships.workspaceId))
+    .where(
+      and(eq(memberships.userId, userId), gt(workspaces.demoExpiresAt, now)),
+    )
+    .limit(1);
+  return row?.slug ?? null;
 }

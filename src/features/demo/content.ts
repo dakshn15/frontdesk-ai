@@ -1,6 +1,9 @@
 // Bloom Hair & Beauty, the fictional Austin salon every demo sandbox starts from. Times are
 // minutes after midnight in the salon's time zone; weekdays run 1 (Monday) to 7 (Sunday).
 
+/** Who the demo visitor is in the dashboard: the salon's front-desk manager. */
+export const DEMO_GUEST_NAME = "Alex Rivera";
+
 export const DEMO_BUSINESS = {
   name: "Bloom Hair & Beauty",
   timezone: "America/Chicago",

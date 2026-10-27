@@ -5,6 +5,7 @@ import {
   Clock,
   Inbox,
   LayoutDashboard,
+  Mail,
   MessageCircle,
   type LucideIcon,
   MessageSquareText,
@@ -42,6 +43,7 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     { label: "Knowledge", href: `${base}/knowledge`, icon: BookOpen },
     { label: "Assistant", href: `${base}/assistant`, icon: Bot },
     { label: "Widget", href: `${base}/widget`, icon: MessageCircle },
+    { label: "Emails", href: `${base}/emails`, icon: Mail },
     team,
     { label: "Settings", href: `${base}/settings`, icon: Settings },
   ];

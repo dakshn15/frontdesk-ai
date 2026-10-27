@@ -40,14 +40,14 @@ export default function LandingPage() {
               Create your workspace
             </Link>
             <Link
-              href="/sign-in"
+              href="/demo"
               className={buttonVariants({
                 size: "lg",
                 variant: "outline",
                 className: "px-4",
               })}
             >
-              Sign in
+              Try the live demo
             </Link>
           </div>
         </div>

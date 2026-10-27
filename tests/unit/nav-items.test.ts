@@ -26,6 +26,7 @@ describe("navItems", () => {
         "Knowledge",
         "Assistant",
         "Widget",
+        "Emails",
         "Team",
         "Settings",
       ]);
@@ -41,6 +42,7 @@ describe("navItems", () => {
         "/w/bloom/knowledge",
         "/w/bloom/assistant",
         "/w/bloom/widget",
+        "/w/bloom/emails",
         "/w/bloom/team",
         "/w/bloom/settings",
       ]);

@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-shell/app-sidebar";
+import { DemoBanner } from "@/components/app-shell/demo-banner";
 import { HandoffAlerts } from "@/components/app-shell/live-updates";
 import { Logo } from "@/components/brand/logo";
 import {
@@ -44,6 +45,12 @@ export default async function WorkspaceLayout({
           <SidebarTrigger />
           <Logo />
         </header>
+        {membership.workspace.demoExpiresAt ? (
+          <DemoBanner
+            slug={membership.workspace.slug}
+            expiresAt={membership.workspace.demoExpiresAt}
+          />
+        ) : null}
         {children}
       </SidebarInset>
     </SidebarProvider>

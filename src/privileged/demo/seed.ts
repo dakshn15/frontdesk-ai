@@ -52,6 +52,9 @@ import type { Source } from "../assistant/tools";
 
 type Tx = Parameters<Parameters<typeof adminDb.transaction>[0]>[0];
 
+// Rows inserted together share a timestamp; a millisecond apart, lists keep the salon's order.
+const inOrder = (now: Date, index: number) => new Date(now.getTime() + index);
+
 const minutesAfter = (at: Date, minutes: number) =>
   new Date(at.getTime() + minutes * 60_000);
 
@@ -237,18 +240,25 @@ export async function seedDemoWorkspace(
     const serviceIds = (
       await tx
         .insert(services)
-        .values(DEMO_SERVICES.map((service) => ({ workspaceId, ...service })))
+        .values(
+          DEMO_SERVICES.map((service, index) => ({
+            workspaceId,
+            ...service,
+            createdAt: inOrder(now, index),
+          })),
+        )
         .returning({ id: services.id })
     ).map((row) => row.id);
     const staffIds = (
       await tx
         .insert(staff)
         .values(
-          DEMO_STAFF.map(({ name, title, bio }) => ({
+          DEMO_STAFF.map(({ name, title, bio }, index) => ({
             workspaceId,
             name,
             title,
             bio,
+            createdAt: inOrder(now, index),
           })),
         )
         .returning({ id: staff.id })

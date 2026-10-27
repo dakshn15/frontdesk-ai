@@ -257,6 +257,23 @@ export function WidgetChat({
     );
   }, [framed, open, config.position]);
 
+  // The page around the chat can open it, or open it and ask a question (the demo salon's
+  // suggested questions). Re-subscribed each render so it always asks with current state.
+  useEffect(() => {
+    if (!framed) return;
+    function onMessage(event: MessageEvent) {
+      if (event.source !== window.parent) return;
+      const data = event.data as { type?: string; text?: unknown } | null;
+      if (data?.type === "frontdesk:open") setOpen(true);
+      if (data?.type === "frontdesk:ask" && typeof data.text === "string") {
+        setOpen(true);
+        void ask(data.text);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  });
+
   useEffect(() => {
     if (showPanel) inputRef.current?.focus();
   }, [showPanel]);
