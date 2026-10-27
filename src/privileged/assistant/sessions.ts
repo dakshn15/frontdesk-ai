@@ -52,7 +52,7 @@ export async function sessionFromToken(
  */
 export async function openConversation(input: {
   workspaceId: string;
-  channel: "widget" | "preview";
+  channel: "widget" | "preview" | "test";
   sessionId: string | null;
   conversationId?: string;
 }): Promise<string> {

@@ -19,6 +19,7 @@ import {
   staff,
   staffHours,
   staffServices,
+  testCases,
   toolCalls,
   verifiedAnswers,
   workspaces,
@@ -36,6 +37,7 @@ import {
   DEMO_POLICIES,
   DEMO_SERVICES,
   DEMO_STAFF,
+  DEMO_TESTS,
 } from "@/features/demo/content";
 import { formatAppointment, timeZoneLabel } from "@/features/bookings/format";
 import { chunkText } from "@/features/knowledge/chunk";
@@ -310,6 +312,15 @@ export async function seedDemoWorkspace(
         id: verifiedAnswers.id,
         question: verifiedAnswers.question,
       });
+
+    await tx.insert(testCases).values(
+      DEMO_TESTS.map((test, index) => ({
+        workspaceId,
+        ...test,
+        createdBy: userId,
+        createdAt: inOrder(now, index),
+      })),
+    );
 
     const passages: Source[] = [];
     for (const document of DEMO_KNOWLEDGE) {

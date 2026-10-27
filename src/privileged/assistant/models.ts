@@ -78,3 +78,18 @@ export function chooseModel(
 export function assistantReady(): boolean {
   return chooseModel("openai") !== null;
 }
+
+/**
+ * The model that grades test answers by meaning, or null without a real key. The scripted
+ * test model can't judge meaning, so it never grades.
+ */
+export function chooseGrader(): LanguageModelV4 | null {
+  const env = getServerEnv();
+  if (env.OPENAI_API_KEY)
+    return createOpenAI({ apiKey: env.OPENAI_API_KEY })(MODEL_IDS.openai);
+  if (env.GOOGLE_GENERATIVE_AI_API_KEY)
+    return createGoogleGenerativeAI({
+      apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
+    })(MODEL_IDS.google);
+  return null;
+}

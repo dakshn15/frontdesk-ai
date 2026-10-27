@@ -61,10 +61,12 @@ export const aiProvider = pgEnum("ai_provider", ["openai", "google"]);
 
 export type AiProvider = (typeof aiProvider.enumValues)[number];
 
-// Where a conversation happens: the website widget, or the owner's dashboard preview.
+// Where a conversation happens: the website widget, the owner's dashboard preview, or a
+// test-lab run.
 export const conversationChannel = pgEnum("conversation_channel", [
   "widget",
   "preview",
+  "test",
 ]);
 
 // ai: the receptionist is answering; needs_human: it handed off; human: a person took over.

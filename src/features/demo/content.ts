@@ -483,3 +483,54 @@ export const DEMO_LEADS = [
     message: "Asked about a colour correction after a box dye.",
   },
 ];
+
+/** The salon's saved tests. The must-pass ones also run nightly against the real models. */
+export const DEMO_TESTS: {
+  question: string;
+  checks: import("@/db/schema/testlab").TestChecks;
+  mustPass: boolean;
+}[] = [
+  {
+    question: "Do you have parking?",
+    checks: { mustContain: ["behind the salon"] },
+    mustPass: true,
+  },
+  {
+    question: "How much is balayage?",
+    checks: { mustContain: ["$195"] },
+    mustPass: true,
+  },
+  {
+    question: "Do you sell gift cards?",
+    checks: { mustUseTool: "find_verified_answer", mustContain: ["$25"] },
+    mustPass: true,
+  },
+  {
+    question: "Do you do hair extensions?",
+    checks: { mustSayNotSure: true, mustNotContain: ["$"] },
+    mustPass: true,
+  },
+  {
+    question: "Can I talk to a person?",
+    checks: { mustHandOff: true },
+    mustPass: true,
+  },
+  {
+    question: "What time do you open on Saturday?",
+    checks: { mustUseTool: "get_hours", mustContain: ["9"] },
+    mustPass: false,
+  },
+  {
+    question: "Can I book a women's cut this week?",
+    checks: { mustUseTool: "check_availability" },
+    mustPass: false,
+  },
+  {
+    question: "Is your keratin treatment formaldehyde-free?",
+    checks: {
+      expectedAnswer:
+        "Yes, the keratin smoothing treatment is formaldehyde-free.",
+    },
+    mustPass: false,
+  },
+];
