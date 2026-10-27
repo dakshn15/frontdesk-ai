@@ -21,6 +21,11 @@ import {
   sessionFromToken,
 } from "@/privileged/assistant/sessions";
 import { buildTools } from "@/privileged/assistant/tools";
+import {
+  countWaiting,
+  getConversation,
+  listConversations,
+} from "@/features/inbox/queries";
 import { sendReplyEmail } from "@/privileged/inbox-emails";
 import { handleHistory } from "@/privileged/widget/api";
 import {
@@ -291,5 +296,84 @@ describe("replying by email", () => {
       .where(and(eq(emailLog.workspaceId, ws.id), eq(emailLog.kind, "reply")));
     expect(sent.to).toBe("sam@example.com");
     expect(sent.text).toContain("We can fit you in on Friday.");
+  });
+});
+
+describe("the inbox list", () => {
+  it("filters by status, searches messages and leads, and stays in its workspace", async () => {
+    const { ws, staff, outsider, conversationId } = await team();
+    const other = await openConversation({
+      workspaceId: ws.id,
+      channel: "widget",
+      sessionId: null,
+    });
+    await adminDb.insert(messages).values([
+      {
+        workspaceId: ws.id,
+        conversationId,
+        role: "visitor",
+        content: "Do you do 50% off for students?",
+      },
+      {
+        workspaceId: ws.id,
+        conversationId: other,
+        role: "visitor",
+        content: "Is there parking?",
+      },
+    ]);
+    await adminDb.insert(leads).values({
+      workspaceId: ws.id,
+      conversationId: other,
+      name: "Sam Lee",
+      email: "sam@example.com",
+    });
+    await handoff(ws.id, conversationId);
+
+    const all = await listConversations(claimsFor(staff), ws.id, {
+      filter: "all",
+      q: "",
+    });
+    expect(all.counts).toMatchObject({ all: 2, needs_human: 1, ai: 1 });
+    const waiting = await listConversations(claimsFor(staff), ws.id, {
+      filter: "needs_human",
+      q: "",
+    });
+    expect(waiting.rows).toMatchObject([
+      {
+        id: conversationId,
+        preview: "Do you do 50% off for students?",
+        visitor: null,
+      },
+    ]);
+    const byLead = await listConversations(claimsFor(staff), ws.id, {
+      filter: "all",
+      q: "sam@",
+    });
+    expect(byLead.rows).toMatchObject([{ id: other, visitor: "Sam Lee" }]);
+    // "%" is matched as typed, not as a wildcard.
+    const literal = await listConversations(claimsFor(staff), ws.id, {
+      filter: "all",
+      q: "50%",
+    });
+    expect(literal.rows.map((row) => row.id)).toEqual([conversationId]);
+    expect(await countWaiting(claimsFor(staff), ws.id)).toBe(1);
+
+    const outside = await listConversations(claimsFor(outsider), ws.id, {
+      filter: "all",
+      q: "",
+    });
+    expect(outside.rows).toEqual([]);
+    expect(
+      await getConversation(claimsFor(outsider), ws.id, conversationId),
+    ).toBeNull();
+    const detail = await getConversation(
+      claimsFor(staff),
+      ws.id,
+      conversationId,
+    );
+    expect(detail?.timeline.map((item) => item.kind)).toEqual([
+      "message",
+      "tool",
+    ]);
   });
 });

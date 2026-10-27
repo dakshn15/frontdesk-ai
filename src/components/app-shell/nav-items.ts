@@ -3,6 +3,7 @@ import {
   Bot,
   CalendarDays,
   Clock,
+  Inbox,
   LayoutDashboard,
   MessageCircle,
   type LucideIcon,
@@ -26,11 +27,13 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     href: `${base}/calendar`,
     icon: CalendarDays,
   };
+  const inbox = { label: "Inbox", href: `${base}/inbox`, icon: Inbox };
   const team = { label: "Team", href: `${base}/team`, icon: Users };
-  if (!canEditWorkspace(role)) return [overview, calendar, team];
+  if (!canEditWorkspace(role)) return [overview, calendar, inbox, team];
   return [
     overview,
     calendar,
+    inbox,
     { label: "Services", href: `${base}/services`, icon: Tags },
     { label: "Staff", href: `${base}/staff`, icon: UserRound },
     { label: "Opening hours", href: `${base}/hours`, icon: Clock },

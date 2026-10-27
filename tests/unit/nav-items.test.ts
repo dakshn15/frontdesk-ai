@@ -6,6 +6,7 @@ describe("navItems", () => {
     expect(navItems("bloom", "staff").map((item) => item.label)).toEqual([
       "Overview",
       "Calendar",
+      "Inbox",
       "Team",
     ]);
   });
@@ -16,6 +17,7 @@ describe("navItems", () => {
       expect(items.map((item) => item.label)).toEqual([
         "Overview",
         "Calendar",
+        "Inbox",
         "Services",
         "Staff",
         "Opening hours",
@@ -30,6 +32,7 @@ describe("navItems", () => {
       expect(items.map((item) => item.href)).toEqual([
         "/w/bloom",
         "/w/bloom/calendar",
+        "/w/bloom/inbox",
         "/w/bloom/services",
         "/w/bloom/staff",
         "/w/bloom/hours",

@@ -6,6 +6,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -16,9 +17,11 @@ import { navItems } from "./nav-items";
 export function SidebarNav({
   slug,
   role,
+  badges = {},
 }: {
   slug: string;
   role: WorkspaceRole;
+  badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -44,6 +47,11 @@ export function SidebarNav({
                 <Icon />
                 <span>{label}</span>
               </SidebarMenuButton>
+              {badges[href] ? (
+                <SidebarMenuBadge aria-label={`${badges[href]} waiting`}>
+                  {badges[href]}
+                </SidebarMenuBadge>
+              ) : null}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
