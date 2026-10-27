@@ -112,8 +112,15 @@ export async function runAgent(input: {
     "visitor",
     input.text.slice(0, MAX_MESSAGE_CHARS),
   );
-  // A person has taken over: the receptionist stays quiet (milestone 7 shows their replies).
+  // A person has taken over: the receptionist stays quiet and the team replies.
   if (workspace.status === "human") return fixed("", conversationId);
+  // A new message on a resolved chat opens it again, with the AI answering.
+  if (workspace.status === "resolved") {
+    await adminDb
+      .update(conversations)
+      .set({ status: "ai" })
+      .where(eq(conversations.id, conversationId));
+  }
 
   const choice = input.model
     ? { ...input.model, onFallback: () => {} }

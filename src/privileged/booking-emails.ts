@@ -31,7 +31,7 @@ const INTRO: Record<BookingEmailKind, string> = {
 const REMINDER_NOTE =
   "To cancel or change it, use the link in your booking email.";
 
-const escapeHtml = (value: string) =>
+export const escapeHtml = (value: string) =>
   value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

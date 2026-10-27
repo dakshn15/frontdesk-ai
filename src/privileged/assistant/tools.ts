@@ -25,6 +25,7 @@ import { searchKnowledge } from "@/features/knowledge/search";
 import { addDays, formatClock, localDate } from "@/lib/clock";
 import { formatDuration } from "@/lib/duration";
 import { formatPrice } from "@/lib/money";
+import { sendHandoffAlert } from "../inbox-emails";
 import { sendBookingEmail } from "../booking-emails";
 import { allowRequest } from "../rate-limit";
 
@@ -536,15 +537,29 @@ export function buildTools(ctx: ToolContext, sources: Map<string, Source>) {
         "handoff_to_human",
         async ({ reason }: { reason: string }) => {
           if (!dryRun) {
-            await adminDb
+            // Only a chat the AI was handling changes state, so one handoff sends one alert.
+            const handedOff = await adminDb
               .update(conversations)
-              .set({ status: "needs_human", handoffReason: reason })
+              .set({
+                status: "needs_human",
+                handoffReason: reason,
+                handoffAt: sql`now()`,
+              })
               .where(
                 and(
                   eq(conversations.id, ctx.conversationId),
                   eq(conversations.workspaceId, ws),
+                  inArray(conversations.status, ["ai", "resolved"]),
                 ),
-              );
+              )
+              .returning({ id: conversations.id });
+            if (handedOff.length > 0) {
+              await sendHandoffAlert({
+                workspaceId: ws,
+                conversationId: ctx.conversationId,
+                reason,
+              });
+            }
           }
           return {
             handedOff: true,

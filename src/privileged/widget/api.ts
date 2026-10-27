@@ -4,15 +4,20 @@ import { z } from "zod";
 import { adminDb } from "@/db/admin";
 import {
   bookings,
+  businessHours,
+  closedDays,
   conversations,
   leads,
   messages,
+  profiles,
   toolCalls,
   workspaces,
 } from "@/db/schema";
 import { insertBooking } from "@/features/bookings/engine";
 import { formatAppointment } from "@/features/bookings/format";
 import { customerSchema } from "@/features/bookings/schemas";
+import { isOpenAt } from "@/features/inbox/open-now";
+import { localDate } from "@/lib/clock";
 import { zodFieldErrors } from "@/lib/validation";
 import { saveMessage } from "../assistant/agent";
 import { json, readJson, tooMany } from "../assistant/chat-api";
@@ -39,6 +44,8 @@ const visitorDetails = customerSchema.extend({
 });
 
 const HISTORY = 50;
+// Waiting this long for a person, the visitor is asked for an email instead.
+const EMAIL_AFTER_MS = 5 * 60_000;
 const token = z.string().min(1).max(100);
 const expired = () =>
   json({ error: "This chat has expired. Reload the page." }, 401);
@@ -49,7 +56,12 @@ type Session = { sessionId: string; workspaceId: string };
 async function ownConversation(session: Session, conversationId?: string) {
   if (!conversationId) return null;
   const [row] = await adminDb
-    .select({ id: conversations.id, status: conversations.status })
+    .select({
+      id: conversations.id,
+      status: conversations.status,
+      handoffAt: conversations.handoffAt,
+      assignedTo: conversations.assignedTo,
+    })
     .from(conversations)
     .where(
       and(
@@ -79,20 +91,70 @@ async function start<T extends z.ZodType>(
 
 const historyBody = z.object({ token, conversationId: z.uuid().optional() });
 
+/** "Ana Diaz" → "Ana"; a person without a name shows as the team. */
+const firstName = (fullName: string | null) =>
+  fullName?.trim().split(/\s+/)[0] || "the team";
+
+/** Whether the business is open now, from its opening hours and closed days. */
+async function openNow(workspaceId: string, now: Date): Promise<boolean> {
+  const [workspace] = await adminDb
+    .select({ timeZone: workspaces.timezone })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId));
+  const today = localDate(workspace.timeZone, now);
+  const [hours, closed] = await Promise.all([
+    adminDb
+      .select({
+        weekday: businessHours.weekday,
+        startMinute: businessHours.startMinute,
+        endMinute: businessHours.endMinute,
+      })
+      .from(businessHours)
+      .where(eq(businessHours.workspaceId, workspaceId)),
+    adminDb
+      .select({ date: closedDays.date })
+      .from(closedDays)
+      .where(
+        and(
+          eq(closedDays.workspaceId, workspaceId),
+          eq(closedDays.date, today),
+        ),
+      ),
+  ]);
+  return isOpenAt(
+    hours,
+    closed.map((day) => day.date),
+    workspace.timeZone,
+    now,
+  );
+}
+
+/**
+ * The transcript, plus what the widget needs while a person is involved: who is handling
+ * it, and whether to ask for an email because nobody picked it up (5 minutes, or closed).
+ */
 export async function handleHistory(request: Request): Promise<Response> {
   const started = await start(request, historyBody);
   if (started instanceof Response) return started;
   const { body, session } = started;
   const conversation = await ownConversation(session, body.conversationId);
-  if (!conversation) return json({ status: "ai", messages: [] });
+  if (!conversation)
+    return json({
+      status: "ai",
+      handler: null,
+      askForEmail: false,
+      messages: [],
+    });
   const rows = await adminDb
     .select({
       id: messages.id,
       role: messages.role,
       content: messages.content,
       sources: messages.sources,
+      authorName: profiles.fullName,
     })
     .from(messages)
+    .leftJoin(profiles, eq(profiles.id, messages.authorId))
     .where(
       and(
         eq(messages.conversationId, conversation.id),
@@ -101,7 +163,45 @@ export async function handleHistory(request: Request): Promise<Response> {
     )
     .orderBy(desc(messages.createdAt))
     .limit(HISTORY);
-  return json({ status: conversation.status, messages: rows.reverse() });
+
+  let handler: string | null = null;
+  if (conversation.status === "human" && conversation.assignedTo) {
+    const [person] = await adminDb
+      .select({ fullName: profiles.fullName })
+      .from(profiles)
+      .where(eq(profiles.id, conversation.assignedTo));
+    handler = firstName(person?.fullName ?? null);
+  }
+
+  let askForEmail = false;
+  if (conversation.status === "needs_human") {
+    const now = new Date();
+    const [lead] = await adminDb
+      .select({ id: leads.id })
+      .from(leads)
+      .where(
+        and(
+          eq(leads.conversationId, conversation.id),
+          eq(leads.workspaceId, session.workspaceId),
+        ),
+      )
+      .limit(1);
+    const waited =
+      conversation.handoffAt !== null &&
+      now.getTime() - conversation.handoffAt.getTime() >= EMAIL_AFTER_MS;
+    askForEmail =
+      !lead && (waited || !(await openNow(session.workspaceId, now)));
+  }
+
+  return json({
+    status: conversation.status,
+    handler,
+    askForEmail,
+    messages: rows.reverse().map(({ authorName, ...message }) => ({
+      ...message,
+      author: message.role === "staff" ? firstName(authorName) : null,
+    })),
+  });
 }
 
 const bookBody = z.object({

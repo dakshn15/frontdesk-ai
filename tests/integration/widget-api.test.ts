@@ -200,7 +200,12 @@ describe("widget history", () => {
         conversationId: mine.conversationId,
       }),
     );
-    expect(await stolen.json()).toEqual({ status: "ai", messages: [] });
+    expect(await stolen.json()).toEqual({
+      status: "ai",
+      handler: null,
+      askForEmail: false,
+      messages: [],
+    });
     expect(
       (await handleHistory(post("/api/widget/history", { token: "made-up" })))
         .status,

@@ -18,6 +18,7 @@ import { authenticatedRole } from "drizzle-orm/supabase";
 import { createdAt } from "./columns";
 import { conversationChannel, conversationStatus, messageRole } from "./enums";
 import { isMember } from "./rls";
+import { profiles } from "./profiles";
 import { workspaces } from "./workspaces";
 
 // Everything here is written by the server with the privileged connection (the chat API
@@ -53,6 +54,9 @@ export const conversations = pgTable(
     channel: conversationChannel().notNull(),
     status: conversationStatus().notNull().default("ai"),
     handoffReason: text(),
+    // When the AI last handed off, and who on the team has taken the chat over.
+    handoffAt: timestamp({ withTimezone: true }),
+    assignedTo: uuid().references(() => profiles.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     lastMessageAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -63,6 +67,13 @@ export const conversations = pgTable(
       t.lastMessageAt,
     ),
     membersRead("conversations", t.workspaceId),
+    // Any member can take a chat over, hand it back or resolve it (column grants limit what).
+    pgPolicy("conversations_update_members", {
+      for: "update",
+      to: authenticatedRole,
+      using: isMember(t.workspaceId),
+      withCheck: isMember(t.workspaceId),
+    }),
   ],
 );
 
@@ -86,6 +97,8 @@ export const messages = pgTable(
     content: text().notNull(),
     // What an AI answer was based on: verified answers, passages, policies.
     sources: jsonb().notNull().default([]),
+    // The team member who wrote a staff reply.
+    authorId: uuid().references(() => profiles.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -93,6 +106,12 @@ export const messages = pgTable(
     check("messages_content_length", sql`char_length(${t.content}) <= 8000`),
     index("messages_conversation_idx").on(t.conversationId, t.createdAt),
     membersRead("messages", t.workspaceId),
+    // Members reply as themselves; visitor and AI messages come only from the server.
+    pgPolicy("messages_insert_staff", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`${isMember(t.workspaceId)} and ${t.role} = 'staff' and ${t.authorId} = auth.uid()`,
+    }),
   ],
 );
 

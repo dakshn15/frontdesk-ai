@@ -169,6 +169,20 @@
       "when": 1793027122506,
       "tag": "20261026150522_widget_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793108893447,
+      "tag": "20261027134813_inbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793108902103,
+      "tag": "20261027134822_inbox_rules",
+      "breakpoints": true
     }
   ]
 }
