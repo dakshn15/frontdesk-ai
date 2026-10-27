@@ -1,0 +1,33 @@
+name: Evaluation
+
+# The demo salon's tests against the real AI models, with the AI grader. CI already checks
+# the same flows with a scripted model on every push; this catches changes in the models.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Start Supabase
+        run: npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+
+      - name: Export Supabase env
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/supabase-env.ts >> "$GITHUB_ENV"
+
+      - run: npm run eval
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}

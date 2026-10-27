@@ -33,6 +33,20 @@ export default defineConfig({
           testTimeout: 20000,
         },
       },
+      {
+        // The demo salon's tests against the real models: nightly in GitHub Actions, or
+        // locally with an AI key. Skipped without one.
+        extends: true,
+        test: {
+          name: "eval",
+          include: ["tests/eval/**/*.eval.ts"],
+          environment: "node",
+          globalSetup: ["tests/integration/global-setup.ts"],
+          setupFiles: ["tests/integration/setup.ts"],
+          env: { DB_POOL_MAX: "1" },
+          testTimeout: 600000,
+        },
+      },
     ],
   },
 });
