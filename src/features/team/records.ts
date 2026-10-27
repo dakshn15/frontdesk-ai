@@ -18,7 +18,8 @@ export type InviteError =
   | "invite_revoked"
   | "invite_used"
   | "invite_expired"
-  | "invite_email_mismatch";
+  | "invite_email_mismatch"
+  | "anonymous_user";
 
 const INVITE_ERRORS = new Set<string>([
   "invite_not_found",
@@ -26,6 +27,7 @@ const INVITE_ERRORS = new Set<string>([
   "invite_used",
   "invite_expired",
   "invite_email_mismatch",
+  "anonymous_user",
 ]);
 
 /** Thrown inside a transaction to roll it back when row level security refuses a write. */

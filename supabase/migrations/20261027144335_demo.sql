@@ -1,0 +1,1 @@
+ALTER TABLE "workspaces" ADD COLUMN "demo_expires_at" timestamp with time zone;

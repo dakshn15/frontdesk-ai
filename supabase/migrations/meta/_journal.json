@@ -183,6 +183,20 @@
       "when": 1793108902103,
       "tag": "20261027134822_inbox_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793112215509,
+      "tag": "20261027144335_demo",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793112224794,
+      "tag": "20261027144344_demo_rules",
+      "breakpoints": true
     }
   ]
 }

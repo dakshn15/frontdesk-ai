@@ -6,6 +6,7 @@ import {
   pgTable,
   smallint,
   text,
+  timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
@@ -47,6 +48,8 @@ export const workspaces = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
+    // Set on demo sandboxes: when the daily clean-up deletes this copy of the demo salon.
+    demoExpiresAt: timestamp({ withTimezone: true }),
     createdBy: uuid().references(() => profiles.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

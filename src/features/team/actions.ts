@@ -41,7 +41,13 @@ async function claimsOrSignIn(nextPath: string): Promise<AuthClaims> {
 async function workspaceContext(slug: string) {
   const claims = await claimsOrSignIn(`/w/${slug}/team`);
   const membership = await getMembershipBySlug(claims, slug);
-  return membership ? { claims, workspaceId: membership.workspace.id } : null;
+  return membership
+    ? {
+        claims,
+        workspaceId: membership.workspace.id,
+        demo: membership.workspace.demoExpiresAt !== null,
+      }
+    : null;
 }
 
 export async function inviteMember(
@@ -51,6 +57,7 @@ export async function inviteMember(
 ): Promise<FormState<{ inviteUrl: string; email: string }>> {
   const context = await workspaceContext(slug);
   if (!context) return fail(teamErrorMessage("not_allowed"));
+  if (context.demo) return fail(teamErrorMessage("demo_workspace"));
   const parsed = inviteSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
 

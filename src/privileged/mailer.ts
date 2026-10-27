@@ -2,6 +2,7 @@ import "server-only";
 import { adminDb } from "@/db/admin";
 import { emailLog } from "@/db/schema";
 import { getServerEnv } from "@/env/server";
+import { isDemoWorkspace } from "./demo/limits";
 
 export type OutgoingEmail = {
   workspaceId: string;
@@ -17,7 +18,8 @@ export type OutgoingEmail = {
 export type EmailStatus = "sent" | "failed" | "not_sent";
 
 /**
- * Sends through Resend when a key is set, and always records the email in email_log.
+ * Sends through Resend when a key is set (never from a demo sandbox), and always records the
+ * email in email_log, which is also the outbox the dashboard shows.
  * Never throws: a failed email must not undo the booking that triggered it.
  */
 export async function sendEmail(email: OutgoingEmail): Promise<EmailStatus> {
@@ -26,7 +28,8 @@ export async function sendEmail(email: OutgoingEmail): Promise<EmailStatus> {
   let providerId: string | null = null;
   let error: string | null = null;
 
-  if (env.RESEND_API_KEY) {
+  // Demo sandboxes never email anyone: their emails only appear in the in-app outbox.
+  if (env.RESEND_API_KEY && !(await isDemoWorkspace(email.workspaceId))) {
     try {
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",

@@ -12,6 +12,8 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { adminDb } from "@/db/admin";
 import { conversations, messages, usageEvents, workspaces } from "@/db/schema";
 import { buildInstructions } from "@/features/assistant/instructions";
+import { DEMO_LIMITS } from "../demo/limits";
+import { allowRequest } from "../rate-limit";
 import { chooseModel } from "./models";
 import { buildTools, type Source } from "./tools";
 
@@ -94,6 +96,7 @@ export async function runAgent(input: {
       currency: workspaces.currency,
       assistantName: workspaces.assistantName,
       aiProvider: workspaces.aiProvider,
+      demoExpiresAt: workspaces.demoExpiresAt,
       status: conversations.status,
     })
     .from(conversations)
@@ -122,9 +125,17 @@ export async function runAgent(input: {
       .where(eq(conversations.id, conversationId));
   }
 
-  const choice = input.model
-    ? { ...input.model, onFallback: () => {} }
-    : chooseModel(workspace.aiProvider);
+  // Demo sandboxes share a daily allowance of AI replies; after it, visitors get the lead form.
+  const { limit, windowSeconds } = DEMO_LIMITS.aiMessagesPerDay;
+  const demoOverCap =
+    workspace.demoExpiresAt !== null &&
+    !(await allowRequest(DEMO_LIMITS.aiKey, limit, windowSeconds, now));
+
+  const choice = demoOverCap
+    ? null
+    : input.model
+      ? { ...input.model, onFallback: () => {} }
+      : chooseModel(workspace.aiProvider);
   if (!choice) {
     await saveMessage(workspaceId, conversationId, "ai", UNAVAILABLE_REPLY);
     return fixed(UNAVAILABLE_REPLY, conversationId);

@@ -20,6 +20,8 @@ export type Membership = {
     cancellationWindowHours: number;
     assistantName: string;
     aiProvider: "openai" | "google";
+    /** Set on demo sandboxes: when this copy is deleted. */
+    demoExpiresAt: Date | null;
   };
 };
 
@@ -62,6 +64,7 @@ export const getMembershipBySlug = cache(
             cancellationWindowHours: workspaces.cancellationWindowHours,
             assistantName: workspaces.assistantName,
             aiProvider: workspaces.aiProvider,
+            demoExpiresAt: workspaces.demoExpiresAt,
           },
         })
         .from(memberships)

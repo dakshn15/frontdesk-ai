@@ -7,6 +7,9 @@ const MESSAGES: Record<string, string> = {
   invite_revoked: "This invite was cancelled.",
   invite_used: "This invite has already been used.",
   invite_expired: "This invite has expired. Ask for a new one.",
+  anonymous_user:
+    "You're using the demo. Sign out and create an account to join a team.",
+  demo_workspace: "Team invites are turned off in the demo.",
 };
 
 /** What to tell someone when a team action or invite fails. */

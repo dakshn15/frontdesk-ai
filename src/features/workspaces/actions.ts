@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { AuthClaims } from "@/db";
+import { getPgError } from "@/db/errors";
 import { fail, type FormState, ok } from "@/lib/action-result";
 import { getAuthClaims } from "@/lib/auth/session";
 import { zodFieldErrors } from "@/lib/validation";
@@ -37,6 +38,10 @@ export async function createWorkspace(
   try {
     ({ slug } = await createWorkspaceRecord(claims, parsed.data));
   } catch (err) {
+    if (getPgError(err)?.message === "anonymous_user")
+      return fail(
+        "You're using the demo. Sign out and create an account to make your own workspace.",
+      );
     console.error("createWorkspace failed", err);
     return fail(TRY_AGAIN);
   }
