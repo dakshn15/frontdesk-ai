@@ -28,9 +28,56 @@ type Source = {
   id: string;
   title: string;
 };
-type Meta = { conversationId?: string; sources?: Source[] };
+type Meta = { conversationId?: string; sources?: Source[]; author?: string };
 type ChatMessage = UIMessage<Meta>;
 type ToolPart = { type: string; state?: string; output?: unknown };
+
+type HistoryMessage = {
+  id: string;
+  role: "visitor" | "ai" | "staff";
+  content: string;
+  sources: Source[];
+  author: string | null;
+};
+type History = {
+  status?: "ai" | "needs_human" | "human" | "resolved";
+  handler?: string | null;
+  askForEmail?: boolean;
+  messages?: HistoryMessage[];
+};
+/** What the server last said about the chat, and how many handoffs the stream had shown. */
+type ServerState = {
+  status: NonNullable<History["status"]>;
+  handler: string | null;
+  askForEmail: boolean;
+  handoffs: number;
+};
+
+// While someone from the team is involved, the widget checks for their replies this often.
+const POLL_MS = 4000;
+
+function fromHistory(
+  message: HistoryMessage,
+  conversationId: string,
+): ChatMessage {
+  return {
+    id: message.id,
+    role: message.role === "visitor" ? "user" : "assistant",
+    parts: [{ type: "text", text: message.content }],
+    metadata: {
+      conversationId,
+      sources: message.sources,
+      author: message.author ?? undefined,
+    },
+  };
+}
+
+const serverState = (data: History, handoffs: number): ServerState => ({
+  status: data.status ?? "ai",
+  handler: data.handler ?? null,
+  askForEmail: data.askForEmail === true,
+  handoffs,
+});
 
 export type WidgetChatConfig = {
   slug: string;
@@ -85,7 +132,7 @@ export function WidgetChat({
   const [open, setOpen] = useState(false);
   const showPanel = open || !framed;
   const [blocked, setBlocked] = useState(false);
-  const [historyHandoff, setHistoryHandoff] = useState(false);
+  const [server, setServer] = useState<ServerState | null>(null);
   const [leadOpen, setLeadOpen] = useState(false);
   const [input, setInput] = useState("");
   const [session] = useState(() => chatSessionStore(slug));
@@ -125,35 +172,66 @@ export function WidgetChat({
       token: stored.token,
       conversationId: stored.conversationId,
     }).then((result) => {
-      const data = result.data as {
-        status?: string;
-        messages?: {
-          id: string;
-          role: "visitor" | "ai" | "staff";
-          content: string;
-          sources: Source[];
-        }[];
-      };
-      if (cancelled || !result.ok || !data.messages) return;
-      setHistoryHandoff(
-        data.status === "needs_human" || data.status === "human",
-      );
+      const data = result.data as History;
+      const conversationId = stored.conversationId;
+      if (cancelled || !result.ok || !data.messages || !conversationId) return;
+      setServer(serverState(data, 0));
       setMessages(
-        data.messages.map((message) => ({
-          id: message.id,
-          role: message.role === "visitor" ? "user" : "assistant",
-          parts: [{ type: "text", text: message.content }],
-          metadata: {
-            conversationId: stored.conversationId,
-            sources: message.sources,
-          },
-        })),
+        data.messages.map((message) => fromHistory(message, conversationId)),
       );
     });
     return () => {
       cancelled = true;
     };
   }, [session, setMessages]);
+
+  // Handoffs the receptionist made in this page's stream. A new one means the server's last
+  // word is out of date until the next check.
+  const handoffs = messages.filter(handedOffIn).length;
+  const chatState: ServerState["status"] =
+    server && server.handoffs === handoffs
+      ? server.status
+      : handoffs > 0
+        ? "needs_human"
+        : (server?.status ?? "ai");
+  const withTeam = chatState === "needs_human" || chatState === "human";
+
+  // While a person is (or should be) involved, check for their replies every few seconds.
+  useEffect(() => {
+    if (!withTeam) return;
+    let cancelled = false;
+    async function check() {
+      const current = session.get();
+      if (document.hidden || !current?.conversationId) return;
+      const { conversationId } = current;
+      const result = await postJson("/api/widget/history", {
+        token: current.token,
+        conversationId,
+      });
+      const data = result.data as History;
+      if (cancelled || !result.ok || !data.messages) return;
+      setServer(serverState(data, handoffs));
+      const replies = data.messages.filter(
+        (message) => message.role === "staff",
+      );
+      setMessages((shown) => {
+        const seen = new Set(shown.map((message) => message.id));
+        const fresh = replies.filter((reply) => !seen.has(reply.id));
+        return fresh.length === 0
+          ? shown
+          : [
+              ...shown,
+              ...fresh.map((reply) => fromHistory(reply, conversationId)),
+            ];
+      });
+    }
+    void check();
+    const timer = setInterval(() => void check(), POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [withTeam, handoffs, session, setMessages]);
 
   // Remember the conversation the server put this visitor in.
   useEffect(() => {
@@ -247,11 +325,14 @@ export function WidgetChat({
   function startOver() {
     session.set(null);
     setMessages([]);
-    setHistoryHandoff(false);
+    setServer(null);
     clearError();
   }
 
-  const handedOff = historyHandoff || messages.some(handedOffIn);
+  const askForEmail =
+    chatState === "needs_human" &&
+    server?.handoffs === handoffs &&
+    server.askForEmail;
   const style = { "--brand": brand } as CSSProperties;
 
   if (framed && !showPanel) {
@@ -337,7 +418,7 @@ export function WidgetChat({
           <li className="max-w-[85%] self-start rounded-2xl bg-white px-3.5 py-2 text-sm shadow-sm">
             {config.greeting}
           </li>
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const mine = message.role === "user";
             const text = textOf(message);
             const offers = mine
@@ -346,6 +427,11 @@ export function WidgetChat({
                   .map((part) => offerIn(part as ToolPart))
                   .filter((offer): offer is BookingOffer => offer !== null);
             const sources = message.metadata?.sources ?? [];
+            const author = message.metadata?.author;
+            const waiting =
+              !mine && busy && index === messages.length - 1 && !offers.length;
+            // While the team handles the chat, the AI's turn is an empty reply: skip it.
+            if (!mine && !text && !waiting && !offers.length) return null;
             return (
               <li
                 key={message.id}
@@ -354,7 +440,12 @@ export function WidgetChat({
                   mine ? "items-end self-end" : "self-start",
                 )}
               >
-                {text || (!mine && busy && offers.length === 0) ? (
+                {author ? (
+                  <p className="text-[11px] text-zinc-500">
+                    {author} from the team
+                  </p>
+                ) : null}
+                {text || waiting ? (
                   <p
                     className={cn(
                       "rounded-2xl px-3.5 py-2 text-sm whitespace-pre-line",
@@ -406,13 +497,14 @@ export function WidgetChat({
               ))}
             </li>
           ) : null}
-          {handedOff ? (
+          {withTeam ? (
             <li
               role="status"
               className="self-stretch rounded-xl bg-amber-50 p-3 text-sm text-amber-900"
             >
-              A team member will reply here as soon as they can. You can also
-              leave your email so they can get back to you.
+              {chatState === "human"
+                ? `You're chatting with ${server?.handler ?? "someone"} from the team.`
+                : "A team member will reply here as soon as they can."}
             </li>
           ) : null}
           {blocked ? (
@@ -426,18 +518,22 @@ export function WidgetChat({
               details.
             </li>
           ) : null}
-          {!ready || leadOpen ? (
+          {!ready || leadOpen || askForEmail ? (
             <li className="self-stretch">
               <LeadForm
                 intro={
-                  ready
-                    ? "Leave your details and the team will get back to you."
-                    : "Our assistant isn't available right now. Leave your details and the team will get back to you."
+                  !ready
+                    ? "Our assistant isn't available right now. Leave your details and the team will get back to you."
+                    : askForEmail
+                      ? "Nobody on the team is free right now. Leave your email and they'll reply by email."
+                      : "Leave your details and the team will get back to you."
                 }
                 brand={brand}
                 onBrand={onBrand}
                 post={post}
-                onCancel={ready ? () => setLeadOpen(false) : undefined}
+                onCancel={
+                  ready && !askForEmail ? () => setLeadOpen(false) : undefined
+                }
               />
             </li>
           ) : null}

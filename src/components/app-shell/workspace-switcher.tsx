@@ -63,7 +63,10 @@ export function WorkspaceSwitcher({
               {workspaces.map((workspace) => (
                 <DropdownMenuItem
                   key={workspace.slug}
-                  render={<Link href={`/w/${workspace.slug}`} />}
+                  // A real request on every switch, so the proxy remembers the choice.
+                  render={
+                    <Link href={`/w/${workspace.slug}`} prefetch={false} />
+                  }
                 >
                   <span className="truncate">{workspace.name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">

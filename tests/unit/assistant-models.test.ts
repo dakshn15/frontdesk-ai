@@ -86,6 +86,28 @@ describe("fakeModel", () => {
     expect(await result.text).toBe("Free parking behind the salon.");
   });
 
+  it("hands off when the visitor asks for a person", async () => {
+    const reasons: string[] = [];
+    const result = streamText({
+      model: fakeModel(),
+      prompt: "Can I talk to a person?",
+      tools: {
+        handoff_to_human: tool({
+          inputSchema: z.object({ reason: z.string() }),
+          execute: async ({ reason }) => {
+            reasons.push(reason);
+            return { handedOff: true };
+          },
+        }),
+      },
+      stopWhen: () => false,
+    });
+    expect(await result.text).toBe(
+      "I've asked the team to join. Someone will reply here soon.",
+    );
+    expect(reasons).toEqual(["The visitor asked for a person."]);
+  });
+
   it("offers the first free time when asked to book", async () => {
     const calls: string[] = [];
     const record =

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { authReturnRedirect, routeDecision } from "@/lib/auth/routing";
+import {
+  authReturnRedirect,
+  isPrefetch,
+  routeDecision,
+} from "@/lib/auth/routing";
 
 const toSignIn = (next: string) => ({
   type: "redirect",
@@ -65,5 +69,16 @@ describe("authReturnRedirect", () => {
     expect(authReturnRedirect("/", params(""))).toBeNull();
     expect(authReturnRedirect("/sign-in", params("error=x"))).toBeNull();
     expect(authReturnRedirect("/w/bloom", params("code=abc"))).toBeNull();
+  });
+});
+
+describe("isPrefetch", () => {
+  it("spots Next's background link prefetches", () => {
+    expect(isPrefetch(new Headers({ "next-router-prefetch": "1" }))).toBe(true);
+    expect(
+      isPrefetch(new Headers({ "next-router-segment-prefetch": "/_tree" })),
+    ).toBe(true);
+    expect(isPrefetch(new Headers({ rsc: "1" }))).toBe(false);
+    expect(isPrefetch(new Headers())).toBe(false);
   });
 });

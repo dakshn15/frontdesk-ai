@@ -46,3 +46,14 @@ export function authReturnRedirect(
   }
   return null;
 }
+
+/**
+ * Whether a request is Next prefetching a link in the background. Those must not change
+ * anything the person didn't choose, like the workspace remembered for /dashboard.
+ */
+export function isPrefetch(headers: Headers): boolean {
+  return (
+    headers.has("next-router-prefetch") ||
+    headers.has("next-router-segment-prefetch")
+  );
+}

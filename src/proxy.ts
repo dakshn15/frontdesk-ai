@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { LAST_WORKSPACE_COOKIE } from "@/lib/auth/home";
-import { authReturnRedirect, routeDecision } from "@/lib/auth/routing";
+import {
+  authReturnRedirect,
+  isPrefetch,
+  routeDecision,
+} from "@/lib/auth/routing";
 import { updateSession } from "@/lib/supabase/proxy";
 import { frameAncestors } from "@/features/widget/domains";
 import { getWidgetConfig } from "@/privileged/widget/guard";
@@ -38,9 +42,10 @@ export async function proxy(request: NextRequest) {
         isSignedIn,
       );
   if (decision.type === "next") {
-    // /dashboard checks this against the user's memberships before using it.
+    // /dashboard checks this against the user's memberships before using it. Prefetches of
+    // links to other workspaces don't count: only pages the person opens do.
     const workspace = WORKSPACE_PATH.exec(request.nextUrl.pathname)?.[1];
-    if (workspace) {
+    if (workspace && !isPrefetch(request.headers)) {
       response.cookies.set(LAST_WORKSPACE_COOKIE, workspace, {
         httpOnly: true,
         sameSite: "lax",

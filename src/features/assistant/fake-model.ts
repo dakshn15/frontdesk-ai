@@ -6,7 +6,8 @@ import type {
 
 // A scripted stand-in for a real model, for end-to-end tests (AI_FAKE=1, never on Vercel).
 // It searches the knowledge with the visitor's words, then answers with the best passage,
-// or says it isn't sure. Asked to book, it offers the first free time for the first service.
+// or says it isn't sure. Asked to book, it offers the first free time for the first service;
+// asked for a person, it hands off.
 
 const usage = {
   inputTokens: {
@@ -127,6 +128,13 @@ function book(
 function respond(
   options: LanguageModelV4CallOptions,
 ): LanguageModelV4StreamPart[] {
+  if (/\b(person|human)\b/i.test(lastUserText(options))) {
+    return toolOutput(options, "handoff_to_human")
+      ? say("I've asked the team to join. Someone will reply here soon.")
+      : call(options, "handoff_to_human", {
+          reason: "The visitor asked for a person.",
+        });
+  }
   if (/\bbook\b/i.test(lastUserText(options))) return book(options);
   if (options.prompt.at(-1)?.role === "tool") {
     return say(foundPassage(options) ?? NOT_SURE);
