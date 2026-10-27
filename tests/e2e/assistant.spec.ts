@@ -23,8 +23,8 @@ test("the preview answers from the business's knowledge and shows its source", a
 
   await signIn(page, owner);
   await expect(page).toHaveURL(`/w/${ws.slug}`);
-  await page.getByRole("link", { name: "Assistant", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Assistant" })).toBeVisible();
+  await page.getByRole("link", { name: "Test lab", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Test lab" })).toBeVisible();
 
   await page.getByLabel("Message").fill("Is there parking?");
   await page.getByRole("button", { name: "Send" }).click();

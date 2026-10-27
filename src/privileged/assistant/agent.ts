@@ -241,7 +241,21 @@ export async function runAgent(input: {
             part.type === "start"
               ? { conversationId, sources: [] }
               : part.type === "finish"
-                ? { conversationId, sources: [...sources.values()] }
+                ? {
+                    conversationId,
+                    sources: [...sources.values()],
+                    // The dashboard preview also shows how the answer was made.
+                    ...(input.mode === "dry"
+                      ? {
+                          inspect: {
+                            model: `${provider} ${modelId}`,
+                            inputTokens: part.totalUsage.inputTokens ?? 0,
+                            outputTokens: part.totalUsage.outputTokens ?? 0,
+                            latencyMs: Date.now() - started,
+                          },
+                        }
+                      : {}),
+                  }
                 : undefined,
         }),
       }),

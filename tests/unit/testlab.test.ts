@@ -62,8 +62,9 @@ describe("evaluateChecks", () => {
   });
 
   it("fails when there was no answer at all", () => {
-    expect(evaluateChecks({ mustContain: ["x"] }, { answer: " ", tools: [] }))
-      .toEqual(["There was no answer.", 'The answer doesn\'t mention "x".']);
+    expect(
+      evaluateChecks({ mustContain: ["x"] }, { answer: " ", tools: [] }),
+    ).toEqual(["There was no answer.", 'The answer doesn\'t mention "x".']);
   });
 });
 

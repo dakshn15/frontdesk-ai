@@ -1,6 +1,6 @@
 import {
   BookOpen,
-  Bot,
+  FlaskConical,
   CalendarDays,
   Clock,
   Inbox,
@@ -41,7 +41,7 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     { label: "Policies", href: `${base}/policies`, icon: ScrollText },
     { label: "Answers", href: `${base}/answers`, icon: MessageSquareText },
     { label: "Knowledge", href: `${base}/knowledge`, icon: BookOpen },
-    { label: "Assistant", href: `${base}/assistant`, icon: Bot },
+    { label: "Test lab", href: `${base}/assistant`, icon: FlaskConical },
     { label: "Widget", href: `${base}/widget`, icon: MessageCircle },
     { label: "Emails", href: `${base}/emails`, icon: Mail },
     team,

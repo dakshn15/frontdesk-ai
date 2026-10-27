@@ -24,7 +24,7 @@ describe("navItems", () => {
         "Policies",
         "Answers",
         "Knowledge",
-        "Assistant",
+        "Test lab",
         "Widget",
         "Emails",
         "Team",
