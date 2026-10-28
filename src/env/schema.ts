@@ -29,6 +29,8 @@ const serverSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   // Optional second provider; the receptionist falls back to it if the first fails.
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+  // Who can open the platform admin page: comma-separated emails. Nobody when unset.
+  PLATFORM_ADMIN_EMAILS: z.string().default(""),
   // Stripe test mode. Without the secret key, the Billing page shows plans but can't subscribe.
   STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),

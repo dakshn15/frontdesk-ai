@@ -70,6 +70,8 @@ export const conversations = pgTable(
       t.workspaceId,
       t.lastMessageAt,
     ),
+    // Analytics and plan limits count chats by when they started.
+    index("conversations_workspace_created_idx").on(t.workspaceId, t.createdAt),
     membersRead("conversations", t.workspaceId),
     // Any member can take a chat over, hand it back or resolve it (column grants limit what).
     pgPolicy("conversations_update_members", {

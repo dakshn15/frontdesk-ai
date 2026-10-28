@@ -232,6 +232,13 @@
       "when": 1793197007840,
       "tag": "20261028141647_billing_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793198434546,
+      "tag": "20261028144034_hardening",
+      "breakpoints": true
     }
   ]
 }

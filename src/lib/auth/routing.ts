@@ -1,4 +1,10 @@
-const SIGNED_IN_ONLY = ["/dashboard", "/onboarding", "/w", "/account"];
+const SIGNED_IN_ONLY = [
+  "/dashboard",
+  "/onboarding",
+  "/w",
+  "/account",
+  "/admin",
+];
 const SIGNED_OUT_ONLY = ["/sign-in", "/sign-up", "/forgot-password"];
 
 export type RouteDecision = { type: "next" } | { type: "redirect"; to: string };

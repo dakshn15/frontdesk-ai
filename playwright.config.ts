@@ -33,7 +33,12 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     // The receptionist answers with a scripted model in tests (never on Vercel).
-    env: { ...(process.env as Record<string, string>), AI_FAKE: "1" },
+    env: {
+      ...(process.env as Record<string, string>),
+      AI_FAKE: "1",
+      // The platform admin e2e test signs in as this user.
+      PLATFORM_ADMIN_EMAILS: "platform-admin@frontdesk.test",
+    },
     timeout: 120_000,
   },
 });

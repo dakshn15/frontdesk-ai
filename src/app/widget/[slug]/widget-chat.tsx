@@ -401,7 +401,7 @@ export function WidgetChat({
             <p className="truncate text-sm font-semibold">
               {config.assistantName}
             </p>
-            <p className="truncate text-xs opacity-80">{config.business}</p>
+            <p className="truncate text-xs">{config.business}</p>
           </div>
           <div className="flex items-center gap-1">
             {messages.length > 0 ? (

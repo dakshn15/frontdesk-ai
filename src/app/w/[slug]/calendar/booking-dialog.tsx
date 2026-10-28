@@ -82,16 +82,14 @@ export function BookingBlock({
           booking.status === "confirmed" &&
             "border-primary/30 bg-primary-soft hover:bg-primary-soft/80",
           booking.status === "completed" &&
-            "border-border bg-muted text-muted-foreground",
+            "border-border bg-muted text-foreground",
           booking.status === "no_show" &&
-            "border-destructive/30 bg-destructive/10 text-destructive",
+            "border-destructive/30 bg-destructive/10 text-red-800 dark:text-red-200",
         )}
       >
         <span className="block truncate font-medium">{customer}</span>
         <span className="block truncate">{booking.serviceName}</span>
-        <span className="block truncate opacity-80">
-          {timeRange(booking, timeZone)}
-        </span>
+        <span className="block truncate">{timeRange(booking, timeZone)}</span>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">

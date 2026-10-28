@@ -71,7 +71,7 @@ export default async function InboxPage({
             )}
           >
             {FILTER_LABEL[option]}{" "}
-            <span className="tabular-nums opacity-70">{counts[option]}</span>
+            <span className="tabular-nums">{counts[option]}</span>
           </Link>
         ))}
       </nav>
