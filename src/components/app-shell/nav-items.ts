@@ -3,6 +3,7 @@ import {
   FlaskConical,
   CalendarDays,
   ChartColumn,
+  CreditCard,
   Clock,
   Inbox,
   LayoutDashboard,
@@ -47,6 +48,7 @@ export function navItems(slug: string, role: WorkspaceRole): NavItem[] {
     { label: "Widget", href: `${base}/widget`, icon: MessageCircle },
     { label: "Emails", href: `${base}/emails`, icon: Mail },
     team,
+    { label: "Billing", href: `${base}/billing`, icon: CreditCard },
     { label: "Settings", href: `${base}/settings`, icon: Settings },
   ];
 }

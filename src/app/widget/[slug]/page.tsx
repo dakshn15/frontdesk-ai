@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { assistantReady } from "@/privileged/assistant/models";
+import { chatAllowed } from "@/privileged/billing/limits";
 import { getWidgetConfig } from "@/privileged/widget/guard";
 import { WidgetChat } from "./widget-chat";
 
@@ -32,7 +33,8 @@ export default async function WidgetPage({
           suggestions: config.suggestions,
           position: config.position === "left" ? "left" : "right",
         }}
-        ready={assistantReady()}
+        // Without a live plan, visitors get the contact form instead of the AI.
+        ready={assistantReady() && (await chatAllowed(config.id)).allowed}
       />
     </>
   );

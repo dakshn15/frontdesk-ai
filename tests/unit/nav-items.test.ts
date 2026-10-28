@@ -29,6 +29,7 @@ describe("navItems", () => {
         "Widget",
         "Emails",
         "Team",
+        "Billing",
         "Settings",
       ]);
       expect(items.map((item) => item.href)).toEqual([
@@ -46,6 +47,7 @@ describe("navItems", () => {
         "/w/bloom/widget",
         "/w/bloom/emails",
         "/w/bloom/team",
+        "/w/bloom/billing",
         "/w/bloom/settings",
       ]);
     }

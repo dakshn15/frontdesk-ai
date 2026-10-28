@@ -161,3 +161,15 @@ async function sendLimitEmail(workspaceId: string, limit: number, now: Date) {
     });
   }
 }
+
+/** The workspace's Stripe subscription, if it ever had one. */
+export async function subscriptionOf(workspaceId: string) {
+  const [row] = await adminDb
+    .select({
+      status: subscriptions.status,
+      currentPeriodEnd: subscriptions.currentPeriodEnd,
+    })
+    .from(subscriptions)
+    .where(eq(subscriptions.workspaceId, workspaceId));
+  return row ?? null;
+}

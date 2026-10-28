@@ -9,7 +9,12 @@ export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+  // In GitHub Actions, failures also show as annotations on the run page.
+  reporter: process.env.GITHUB_ACTIONS
+    ? [["list"], ["github"], ["html", { open: "never" }]]
+    : process.env.CI
+      ? [["list"], ["html", { open: "never" }]]
+      : "list",
   use: { baseURL, trace: "on-first-retry" },
   // Locally the dev server compiles each route on its first request, which can take several
   // seconds under parallel load. CI runs against a production build and keeps the defaults.
