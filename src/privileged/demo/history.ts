@@ -91,7 +91,16 @@ const SAMPLES: Sample[] = [
     tools: ["search_knowledge"],
     topic: "Other",
     outcome: "unanswered",
-    weight: 1,
+    weight: 2,
+  },
+  {
+    question: "Do you do beard trims?",
+    answer:
+      "I'm not sure about that. I can pass your question to the team if you leave your email.",
+    tools: ["search_knowledge"],
+    topic: "Services",
+    outcome: "unanswered",
+    weight: 2,
   },
   {
     question: "Do you do hair extensions?",

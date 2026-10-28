@@ -65,6 +65,19 @@ test("a visitor starts the demo, chats on the salon's site and runs its dashboar
     page.getByText("Your appointment at Bloom Hair & Beauty is booked").first(),
   ).toBeVisible();
 
+  // A month of analytics: tiles, charts and topics.
+  await page.goto(`/w/${slug}/analytics`);
+  await expect(page.getByRole("heading", { name: "Analytics" })).toBeVisible();
+  const topics = page.getByRole("region", { name: "Top topics" });
+  await expect(topics.getByText("Booking", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "AI cost per day" })
+      .locator("svg")
+      .first(),
+  ).toBeVisible();
+  await expect(page.getByText("openai gpt-5.4-mini")).toBeVisible();
+
   // Team invites are off in the demo.
   await page.goto(`/w/${slug}/team`);
   await page.getByRole("button", { name: "Invite teammate" }).click();

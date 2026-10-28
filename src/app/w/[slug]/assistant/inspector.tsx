@@ -1,3 +1,4 @@
+import { costOf, formatUsd } from "@/features/analytics/prices";
 import { TOOL_LABEL } from "@/features/inbox/constants";
 import { FixAnswerDialog } from "./fix-answer-dialog";
 
@@ -92,7 +93,7 @@ export function Inspector({
       </div>
 
       {inspect ? (
-        <dl className="grid grid-cols-3 gap-2 text-xs">
+        <dl className="grid grid-cols-2 gap-2 text-xs">
           <div>
             <dt className="text-muted-foreground">Model</dt>
             <dd className="font-medium break-words">{inspect.model}</dd>
@@ -107,6 +108,18 @@ export function Inspector({
             <dt className="text-muted-foreground">Time</dt>
             <dd className="font-medium tabular-nums">
               {(inspect.latencyMs / 1000).toFixed(1)} s
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Cost</dt>
+            <dd className="font-medium tabular-nums">
+              {formatUsd(
+                costOf(
+                  inspect.model.split(" ").at(-1) ?? "",
+                  inspect.inputTokens,
+                  inspect.outputTokens,
+                ),
+              )}
             </dd>
           </div>
         </dl>

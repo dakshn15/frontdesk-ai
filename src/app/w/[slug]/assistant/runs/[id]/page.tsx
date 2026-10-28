@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
+import { costOf, formatUsd } from "@/features/analytics/prices";
 import { getRun } from "@/features/testlab/queries";
 import { requireManager } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,15 @@ export default async function RunPage({
                 ? `Used ${result.tools.join(", ")}`
                 : "Used no tools"}
               . {(result.latencyMs / 1000).toFixed(1)} s,{" "}
-              {result.inputTokens + result.outputTokens} tokens.
+              {result.inputTokens + result.outputTokens} tokens,{" "}
+              {formatUsd(
+                costOf(
+                  run.model.split(" ").at(-1) ?? "",
+                  result.inputTokens,
+                  result.outputTokens,
+                ),
+              )}
+              .
             </p>
           </li>
         ))}
