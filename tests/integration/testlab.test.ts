@@ -10,6 +10,7 @@ import {
   testCases,
   testResults,
   testRuns,
+  workspaces,
 } from "@/db/schema";
 import { fakeModel } from "@/features/assistant/fake-model";
 import { DEMO_TESTS } from "@/features/demo/content";
@@ -151,6 +152,12 @@ describe("test runs", () => {
       new Date(Date.now() + 3_600_000),
     );
     trackWorkspace(id);
+    // The salon's content without demo status: the shared daily demo AI cap is global, and
+    // another file fills it up to test it.
+    await adminDb
+      .update(workspaces)
+      .set({ demoExpiresAt: null })
+      .where(eq(workspaces.id, id));
     const before = await counts(id);
     const started = await startTestRun(id, owner.id);
     if (!started.ok) throw new Error(started.error);
