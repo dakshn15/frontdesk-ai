@@ -12,8 +12,10 @@ import { getWidgetConfig } from "@/privileged/widget/guard";
 const CACHE_HEADERS = ["cache-control", "expires", "pragma"];
 const WORKSPACE_PATH = /^\/w\/([a-z0-9-]+)(?:\/|$)/;
 
-// Public chat routes have no signed-in user, so they skip the Supabase session refresh.
-const PUBLIC_CHAT = /^\/(?:embed\.js$|api\/chat(?:\/|$)|api\/widget\/)/;
+// Public chat routes and webhooks have no signed-in user, so they skip the Supabase session
+// refresh.
+const PUBLIC_CHAT =
+  /^\/(?:embed\.js$|api\/chat(?:\/|$)|api\/widget\/|api\/webhooks\/)/;
 const WIDGET_PAGE = /^\/widget\/([a-z0-9-]+)\/?$/;
 
 export async function proxy(request: NextRequest) {

@@ -29,6 +29,12 @@ const serverSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   // Optional second provider; the receptionist falls back to it if the first fails.
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+  // Stripe test mode. Without the secret key, the Billing page shows plans but can't subscribe.
+  STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
+  // The Stripe price ids of the Starter and Pro monthly prices.
+  STRIPE_PRICE_STARTER: z.string().startsWith("price_").optional(),
+  STRIPE_PRICE_PRO: z.string().startsWith("price_").optional(),
   // "1" swaps in a scripted model for end-to-end tests. Ignored on Vercel.
   AI_FAKE: z.enum(["0", "1"]).default("0"),
   ...clientShape,

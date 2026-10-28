@@ -1,7 +1,7 @@
 import type { LanguageModelV4StreamPart } from "@ai-sdk/provider";
 import { simulateReadableStream } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { adminDb } from "@/db/admin";
 import {
@@ -11,6 +11,7 @@ import {
   knowledgeChunks,
   leads,
   messages,
+  rateLimitWindows,
   toolCalls,
   usageEvents,
   verifiedAnswers,
@@ -31,7 +32,7 @@ import {
   sessionFromToken,
 } from "@/privileged/assistant/sessions";
 import { buildTools, type Source } from "@/privileged/assistant/tools";
-import { allowRequest } from "@/privileged/rate-limit";
+import { allowRequest, pruneRateLimits } from "@/privileged/rate-limit";
 import {
   claimsFor,
   cleanupTestData,
@@ -473,5 +474,21 @@ describe("visitor sessions and limits", () => {
     for (let i = 0; i < 3; i += 1)
       results.push(await allowRequest(key, 2, 60, now));
     expect(results).toEqual([true, true, false]);
+  });
+
+  it("pruning keeps windows that may still be open, up to the longest (40 days)", async () => {
+    const live = `test:${crypto.randomUUID()}`;
+    const old = `test:${crypto.randomUUID()}`;
+    const day = 86_400_000;
+    await adminDb.insert(rateLimitWindows).values([
+      { key: live, windowStart: new Date(Date.now() - 20 * day), count: 1 },
+      { key: old, windowStart: new Date(Date.now() - 50 * day), count: 1 },
+    ]);
+    await pruneRateLimits();
+    const left = await adminDb
+      .select({ key: rateLimitWindows.key })
+      .from(rateLimitWindows)
+      .where(inArray(rateLimitWindows.key, [live, old]));
+    expect(left).toEqual([{ key: live }]);
   });
 });

@@ -1,5 +1,6 @@
 "use server";
 
+import { canAddSeat } from "@/privileged/billing/limits";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -58,6 +59,10 @@ export async function inviteMember(
   const context = await workspaceContext(slug);
   if (!context) return fail(teamErrorMessage("not_allowed"));
   if (context.demo) return fail(teamErrorMessage("demo_workspace"));
+  if (!(await canAddSeat(context.workspaceId)))
+    return fail(
+      "Your plan's team seats are full. Remove someone or upgrade your plan in Billing.",
+    );
   const parsed = inviteSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(CHECK_FIELDS, zodFieldErrors(parsed.error));
 

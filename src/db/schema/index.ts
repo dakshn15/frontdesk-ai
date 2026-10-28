@@ -14,3 +14,4 @@ export * from "./bookings";
 export * from "./knowledge";
 export * from "./conversations";
 export * from "./testlab";
+export * from "./billing";

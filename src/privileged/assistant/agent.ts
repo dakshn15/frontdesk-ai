@@ -12,6 +12,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { adminDb } from "@/db/admin";
 import { conversations, messages, usageEvents, workspaces } from "@/db/schema";
 import { buildInstructions } from "@/features/assistant/instructions";
+import { chatAllowed } from "../billing/limits";
 import { DEMO_LIMITS } from "../demo/limits";
 import { allowRequest } from "../rate-limit";
 import { chooseModel } from "./models";
@@ -123,6 +124,16 @@ export async function runAgent(input: {
       .update(conversations)
       .set({ status: "ai" })
       .where(eq(conversations.id, conversationId));
+  }
+
+  // Website chats need a live trial or plan, within this month's chat limit; otherwise the
+  // visitor gets the lead form, and the owner an email.
+  if (input.mode === "live") {
+    const access = await chatAllowed(workspaceId, { now, notify: true });
+    if (!access.allowed) {
+      await saveMessage(workspaceId, conversationId, "ai", UNAVAILABLE_REPLY);
+      return fixed(UNAVAILABLE_REPLY, conversationId);
+    }
   }
 
   // Demo sandboxes share a daily allowance of AI replies; after it, visitors get the lead form.

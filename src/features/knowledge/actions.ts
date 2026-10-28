@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { withRls } from "@/db";
+import { canAddKnowledge } from "@/privileged/billing/limits";
 import { syncSource } from "@/jobs/knowledge";
 import { getManagerContext } from "@/features/workspaces/manager-context";
 import {
@@ -109,6 +110,10 @@ export async function addKnowledge(
   const context = await getManagerContext(slug);
   const kind = kindSchema.safeParse(formData.get("kind"));
   if (!context || !kind.success) return fail(NOT_ALLOWED);
+  if (!(await canAddKnowledge(context.workspace.id)))
+    return fail(
+      "Your plan's knowledge limit is reached. Delete a source or upgrade your plan in Billing.",
+    );
   const source = await readSource(kind.data, formData);
   if ("errors" in source) return fail(CHECK_FIELDS, source.errors);
 
