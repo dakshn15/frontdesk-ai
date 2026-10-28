@@ -56,6 +56,10 @@ export const conversations = pgTable(
     handoffReason: text(),
     // When the AI last handed off, and who on the team has taken the chat over.
     handoffAt: timestamp({ withTimezone: true }),
+    // Set once the chat has gone quiet: what it was about and how it ended (analytics).
+    topic: text(),
+    outcome: text(),
+    taggedAt: timestamp({ withTimezone: true }),
     assignedTo: uuid().references(() => profiles.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     lastMessageAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

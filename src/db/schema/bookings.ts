@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
 import { createdAt, updatedAt } from "./columns";
+import { conversations } from "./conversations";
 import { bookingSource, bookingStatus } from "./enums";
 import { profiles } from "./profiles";
 import { isManager, isMember } from "./rls";
@@ -102,6 +103,10 @@ export const bookings = pgTable(
     source: bookingSource().notNull(),
     // The customer's manage link carries the token; only its hash is stored.
     manageTokenHash: text().notNull().unique(),
+    // The website chat it was booked from, if any.
+    conversationId: uuid().references(() => conversations.id, {
+      onDelete: "set null",
+    }),
     cancelledAt: timestamp({ withTimezone: true }),
     // Set when the day-before reminder goes out; cleared when the booking moves.
     reminderSentAt: timestamp({ withTimezone: true }),

@@ -268,6 +268,8 @@ export type NewBooking = {
   startsAt: Date;
   customer: CustomerInput;
   notes: string;
+  /** The website chat it was booked from (a confirmed booking card). */
+  conversationId?: string;
 };
 
 export type CreateResult =
@@ -335,6 +337,7 @@ export async function insertBooking(
             service.bufferMinutes,
           ),
           notes: input.notes,
+          conversationId: input.conversationId ?? null,
           source: actor.source,
           manageTokenHash: hash,
         })

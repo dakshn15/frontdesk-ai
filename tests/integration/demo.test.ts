@@ -78,8 +78,9 @@ describe("demo sandboxes", () => {
     expect(await rows(services, ws.id)).toBe(15);
     expect(await rows(staff as never, ws.id)).toBe(4);
     expect(await rows(bookings as never, ws.id)).toBeGreaterThan(10);
-    expect(await rows(conversations as never, ws.id)).toBe(4);
-    expect(await rows(leads as never, ws.id)).toBe(3);
+    // 4 sample chats for the inbox, plus a month of tagged history for analytics.
+    expect(await rows(conversations as never, ws.id)).toBeGreaterThan(60);
+    expect(await rows(leads as never, ws.id)).toBeGreaterThan(3);
     expect(await rows(knowledgeChunks as never, ws.id)).toBeGreaterThan(5);
     expect(await rows(emailLog as never, ws.id)).toBeGreaterThan(0);
     // Every seeded customer address is a safe example address.

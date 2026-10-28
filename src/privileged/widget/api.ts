@@ -281,6 +281,7 @@ export async function handleBook(request: Request): Promise<Response> {
         startsAt,
         customer: customer.data,
         notes: "",
+        conversationId: conversation.id,
       },
       { actorId: null, ignoreWindow: false, now: new Date(), source: "widget" },
     ),

@@ -50,6 +50,7 @@ import {
 } from "@/lib/clock";
 import { createSecretToken } from "@/lib/secret-token";
 import { bookingEmailContent } from "../booking-emails";
+import { seedHistory } from "./history";
 import type { Source } from "../assistant/tools";
 
 type Tx = Parameters<Parameters<typeof adminDb.transaction>[0]>[0];
@@ -397,6 +398,12 @@ export async function seedDemoWorkspace(
       tx,
       workspaceId,
       (title) => sources.find((source) => source.title === title),
+      now,
+    );
+    await seedHistory(
+      tx,
+      workspaceId,
+      { services: serviceIds, staff: staffIds, customers: customerIds },
       now,
     );
     await tx.insert(leads).values(

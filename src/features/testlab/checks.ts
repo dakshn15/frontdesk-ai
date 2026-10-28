@@ -4,7 +4,7 @@ import type { TestChecks } from "@/db/schema/testlab";
 // owner can see why without reading code.
 
 /** Phrases that count as the receptionist saying it doesn't know. */
-const NOT_SURE =
+export const NOT_SURE =
   /not sure|don't know|do not know|(can't|cannot) (answer|confirm|say)|don't have (that|this|any) information|i'm unable/i;
 
 const normalize = (text: string) =>
