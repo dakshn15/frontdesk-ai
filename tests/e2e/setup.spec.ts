@@ -15,7 +15,7 @@ test("the setup checklist tracks progress", async ({ page }) => {
   await signIn(page, owner);
   await expect(page).toHaveURL(`/w/${ws.slug}`);
   const card = page.getByRole("region", { name: "Set up your receptionist" });
-  await expect(card.getByText("1 of 6 done")).toBeVisible();
+  await expect(card.getByText("1 of 7 done")).toBeVisible();
 
   await card.getByRole("link", { name: /^Services/ }).click();
   await expect(page).toHaveURL(`/w/${ws.slug}/services`);
@@ -27,7 +27,7 @@ test("the setup checklist tracks progress", async ({ page }) => {
 
   await page.getByRole("link", { name: "Overview", exact: true }).click();
   await expect(page).toHaveURL(`/w/${ws.slug}`);
-  await expect(card.getByText("2 of 6 done")).toBeVisible();
+  await expect(card.getByText("2 of 7 done")).toBeVisible();
   await expect(
     card.getByRole("link", { name: "Services (done)" }),
   ).toBeVisible();

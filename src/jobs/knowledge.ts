@@ -3,7 +3,8 @@ import { eq, sql } from "drizzle-orm";
 import { adminDb } from "@/db/admin";
 import { knowledgeChunks, knowledgeSources } from "@/db/schema";
 import { chunkText } from "@/features/knowledge/chunk";
-import { type Embed, embedTexts } from "@/features/knowledge/embeddings";
+import { type Embed, openAiEmbedder } from "@/features/knowledge/embeddings";
+import { aiKeysFor } from "@/privileged/ai-keys";
 import { htmlToText, sitemapUrls } from "@/features/knowledge/html-text";
 import { type FetchPage, FetchPageError, fetchPage } from "./fetch-page";
 
@@ -98,10 +99,8 @@ async function collectPages(source: Source, fetch: FetchPage): Promise<Page[]> {
 
 export async function syncSource(
   sourceId: string,
-  deps: { fetchPage: FetchPage; embed: Embed } = {
-    fetchPage,
-    embed: embedTexts,
-  },
+  // Without an embed, the workspace's own OpenAI key embeds the chunks.
+  deps: { fetchPage: FetchPage; embed?: Embed } = { fetchPage },
 ): Promise<void> {
   const [source] = await adminDb
     .update(knowledgeSources)
@@ -130,7 +129,10 @@ export async function syncSource(
     if (chunks.length === 0) {
       throw new SyncError("We didn't find any text there.");
     }
-    const embeddings = await deps.embed(
+    const embed =
+      deps.embed ??
+      openAiEmbedder((await aiKeysFor(source.workspaceId)).openai);
+    const embeddings = await embed(
       chunks.map((chunk) => `${chunk.heading}\n${chunk.content}`.trim()),
     );
     // A single page's own title replaces the address we used as a placeholder.

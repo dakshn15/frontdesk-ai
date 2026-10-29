@@ -15,6 +15,7 @@ import { buildInstructions } from "@/features/assistant/instructions";
 import { chatAllowed } from "../billing/limits";
 import { DEMO_LIMITS } from "../demo/limits";
 import { allowRequest } from "../rate-limit";
+import { aiKeysFor } from "../ai-keys";
 import { chooseModel } from "./models";
 import { buildTools, type Source } from "./tools";
 
@@ -146,7 +147,7 @@ export async function runAgent(input: {
     ? null
     : input.model
       ? { ...input.model, onFallback: () => {} }
-      : chooseModel(workspace.aiProvider);
+      : chooseModel(workspace.aiProvider, await aiKeysFor(workspaceId));
   if (!choice) {
     await saveMessage(workspaceId, conversationId, "ai", UNAVAILABLE_REPLY);
     return fixed(UNAVAILABLE_REPLY, conversationId);

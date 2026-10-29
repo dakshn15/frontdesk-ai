@@ -7,6 +7,8 @@ import {
 } from "@/features/workspaces/permissions";
 import { requireMembership } from "@/lib/auth/session";
 import { currencyOptions, timeZoneOptions } from "@/lib/locale-options";
+import { aiKeyStatus } from "@/privileged/ai-keys";
+import { AiKeysForm } from "./ai-keys-form";
 import { BookingRulesForm } from "./booking-rules-form";
 import { ReceptionistForm } from "./receptionist-form";
 import { BusinessDetailsForm } from "./business-details-form";
@@ -55,6 +57,26 @@ export default async function SettingsPage({
           slug={workspace.slug}
           assistantName={workspace.assistantName}
           aiProvider={workspace.aiProvider}
+        />
+      </section>
+
+      <Separator className="my-10" />
+      <section aria-labelledby="ai-keys" className="scroll-mt-20">
+        <h2 id="ai-keys" className="text-lg font-semibold">
+          AI keys
+        </h2>
+        <p className="mt-1 mb-6 max-w-2xl text-sm text-muted-foreground">
+          Your receptionist answers with your own OpenAI or Google Gemini
+          account, so you pay the provider directly for what it uses. Keys are
+          checked with the provider, stored encrypted, and never shown again.
+          With both saved, the other one answers if your chosen provider is
+          down. An OpenAI key also turns on meaning-based search of your
+          documents.
+        </p>
+        <AiKeysForm
+          slug={workspace.slug}
+          status={await aiKeyStatus(workspace.id)}
+          isDemo={workspace.demoExpiresAt !== null}
         />
       </section>
 

@@ -18,6 +18,7 @@ import {
 import { parseFetchableUrl } from "@/lib/safe-url";
 import { zodFieldErrors } from "@/lib/validation";
 import { MAX_FILE_BYTES } from "./constants";
+import { aiKeysFor } from "@/privileged/ai-keys";
 import { embedQuery } from "./embeddings";
 import { ExtractError, extractText } from "./extract";
 import {
@@ -182,7 +183,10 @@ export async function previewSearch(
   const context = await getManagerContext(slug);
   const text = z.string().trim().min(1).max(500).safeParse(query);
   if (!context || !text.success) return fail(NOT_ALLOWED);
-  const queryEmbedding = await embedQuery(text.data);
+  const queryEmbedding = await embedQuery(
+    text.data,
+    (await aiKeysFor(context.workspace.id)).openai,
+  );
   const passages = await withRls(context.claims, (tx) =>
     searchKnowledge(tx, context.workspace.id, text.data, { queryEmbedding }),
   );

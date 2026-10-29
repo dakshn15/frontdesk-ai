@@ -1,6 +1,7 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import { type AuthClaims, withRls } from "@/db";
+import { aiKeysFor } from "@/privileged/ai-keys";
 import type { SetupFacts } from "./checklist";
 
 /** Everything the setup checklist needs, in one query. */
@@ -8,8 +9,9 @@ export async function getSetupFacts(
   claims: AuthClaims,
   workspaceId: string,
 ): Promise<SetupFacts> {
-  const rows = await withRls(claims, (tx) =>
-    tx.execute<SetupFacts>(sql`
+  const [rows, keys] = await Promise.all([
+    withRls(claims, (tx) =>
+      tx.execute<Omit<SetupFacts, "aiKey">>(sql`
       select
         exists (
           select 1 from public.business_hours where workspace_id = ${workspaceId}
@@ -25,7 +27,10 @@ export async function getSetupFacts(
         (select count(*)::int from public.policies where workspace_id = ${workspaceId}) as "policies",
         (select count(*)::int from public.verified_answers where workspace_id = ${workspaceId}) as "answers"
     `),
-  );
+    ),
+    // The keys table is server only, so this part can't run under the member's session.
+    aiKeysFor(workspaceId),
+  ]);
   const [facts] = rows;
-  return facts;
+  return { ...facts, aiKey: keys.source !== "none" };
 }

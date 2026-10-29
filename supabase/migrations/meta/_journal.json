@@ -239,6 +239,20 @@
       "when": 1793198434546,
       "tag": "20261028144034_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793291284319,
+      "tag": "20261029162804_ai_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793291348379,
+      "tag": "20261029162908_ai_keys_rules",
+      "breakpoints": true
     }
   ]
 }

@@ -15,3 +15,4 @@ export * from "./knowledge";
 export * from "./conversations";
 export * from "./testlab";
 export * from "./billing";
+export * from "./ai-keys";

@@ -14,6 +14,7 @@ import {
 import { evaluateChecks } from "@/features/testlab/checks";
 import { MAX_TESTS } from "@/features/testlab/schemas";
 import { runAgent } from "../assistant/agent";
+import { aiKeysFor } from "../ai-keys";
 import { chooseGrader, chooseModel } from "../assistant/models";
 import { openConversation } from "../assistant/sessions";
 import { allowRequest } from "../rate-limit";
@@ -79,7 +80,10 @@ export async function startTestRun(
     .select({ aiProvider: workspaces.aiProvider })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId));
-  const choice = chooseModel(workspace.aiProvider);
+  const choice = chooseModel(
+    workspace.aiProvider,
+    await aiKeysFor(workspaceId),
+  );
   const [run] = await adminDb
     .insert(testRuns)
     .values({
@@ -154,7 +158,10 @@ export async function executeTestRun(
     .where(eq(testRuns.id, runId));
   if (!run) return;
   const { workspaceId } = run;
-  const grader = options.grader === undefined ? chooseGrader() : options.grader;
+  const grader =
+    options.grader === undefined
+      ? chooseGrader(await aiKeysFor(workspaceId))
+      : options.grader;
   let passed = 0;
   let failed = 0;
   try {

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FormMessage } from "@/components/forms/form-message";
 import { requireManager } from "@/lib/auth/session";
+import { aiKeysFor } from "@/privileged/ai-keys";
 import { assistantReady } from "@/privileged/assistant/models";
 import { PreviewChat } from "./preview-chat";
 import { TestLabTabs } from "./test-lab-tabs";
@@ -13,7 +15,7 @@ export default async function PlaygroundPage({
   const { slug } = await params;
   const { membership } = await requireManager(slug);
   const { workspace } = membership;
-  const ready = assistantReady();
+  const ready = assistantReady(await aiKeysFor(workspace.id));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-10">
@@ -29,9 +31,15 @@ export default async function PlaygroundPage({
       {ready ? null : (
         <div className="mt-6">
           <FormMessage tone="error">
-            The receptionist needs an AI key before it can answer. Add
-            OPENAI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY in your hosting
-            settings.
+            The receptionist needs an AI key before it can answer. Add your
+            OpenAI or Google Gemini key in{" "}
+            <Link
+              href={`/w/${workspace.slug}/settings#ai-keys`}
+              className="font-medium underline underline-offset-4"
+            >
+              Settings
+            </Link>
+            .
           </FormMessage>
         </div>
       )}

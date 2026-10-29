@@ -38,6 +38,8 @@ export default defineConfig({
       AI_FAKE: "1",
       // The platform admin e2e test signs in as this user.
       PLATFORM_ADMIN_EMAILS: "platform-admin@frontdesk.test",
+      // Lets the settings e2e test save an AI key (the check with the provider is skipped).
+      AI_KEYS_SECRET: "e2e-secret-for-saved-ai-keys-only",
     },
     timeout: 120_000,
   },

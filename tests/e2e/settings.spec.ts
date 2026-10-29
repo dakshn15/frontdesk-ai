@@ -26,6 +26,37 @@ test("an owner renames the workspace", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("an owner saves and removes their own AI key", async ({ page }) => {
+  const owner = await createTestUser();
+  const ws = await createTestWorkspace(owner);
+  await signIn(page, owner);
+  await expect(page).toHaveURL(`/w/${ws.slug}`);
+
+  await page.goto(`/w/${ws.slug}/settings`);
+  const keys = page.getByRole("region", { name: "AI keys" });
+  await keys.getByLabel("OpenAI key").fill("not-a-key");
+  await keys.getByRole("button", { name: "Check and save" }).first().click();
+  await expect(keys.getByText('OpenAI keys start with "sk-".')).toBeVisible();
+
+  await keys.getByLabel("OpenAI key").fill("sk-test-e2e-4321");
+  await keys.getByRole("button", { name: "Check and save" }).first().click();
+  await expect(keys.getByText("Saved key ending in 4321")).toBeVisible();
+  // The key itself is never sent back to the page.
+  expect(await page.content()).not.toContain("sk-test-e2e-4321");
+
+  await page.goto(`/w/${ws.slug}`);
+  await expect(
+    page
+      .getByRole("region", { name: "Set up your receptionist" })
+      .getByRole("link", { name: "AI key (done)" }),
+  ).toBeVisible();
+
+  await page.goto(`/w/${ws.slug}/settings`);
+  await keys.getByRole("button", { name: "Remove key" }).click();
+  await expect(keys.getByText("No key saved").first()).toBeVisible();
+  await expect(keys.getByText("Saved key ending in 4321")).toHaveCount(0);
+});
+
 test("staff get a 404 on settings", async ({ page }) => {
   const [owner, staff] = await Promise.all([
     createTestUser(),

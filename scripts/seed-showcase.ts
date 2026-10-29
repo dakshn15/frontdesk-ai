@@ -12,6 +12,7 @@ import {
   services,
   workspaces,
 } from "@/db/schema";
+import { type AiKeyProvider, storeAiKey } from "@/privileged/ai-keys";
 import { seedDemoWorkspace } from "@/privileged/demo/seed";
 
 export const DEFAULT_SLUG = "bloom-hair-beauty";
@@ -108,6 +109,29 @@ export async function resetShowcase(
       stripeCustomerId: SHOWCASE_CUSTOMER_ID,
     },
   });
+}
+
+/** The AI keys in the environment that the showcase workspace is given as its own. */
+export function showcaseKeys(): {
+  provider: AiKeyProvider;
+  from: string;
+  key: string;
+}[] {
+  if (!process.env.AI_KEYS_SECRET) return [];
+  const found = [
+    { provider: "openai", from: "OPENAI_API_KEY" },
+    { provider: "google", from: "GOOGLE_GENERATIVE_AI_API_KEY" },
+  ] as const;
+  return found.flatMap(({ provider, from }) => {
+    const key = process.env[from];
+    return key ? [{ provider, from, key }] : [];
+  });
+}
+
+/** Saves those keys on the workspace, so its receptionist answers like a customer's would. */
+export async function giveShowcaseKeys(workspaceId: string): Promise<void> {
+  for (const { provider, key } of showcaseKeys())
+    await storeAiKey(workspaceId, provider, key);
 }
 
 export async function closeDatabase(): Promise<void> {

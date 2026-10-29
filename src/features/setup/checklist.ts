@@ -6,6 +6,8 @@ export type SetupFacts = {
   bookableStaff: number;
   policies: number;
   answers: number;
+  /** The receptionist has an AI key to answer with. */
+  aiKey: boolean;
 };
 
 export type SetupStep = {
@@ -28,6 +30,12 @@ export function setupChecklist(
       label: "Business details",
       done: true,
       href: `${base}/settings`,
+    },
+    {
+      key: "ai",
+      label: "AI key",
+      done: facts.aiKey,
+      href: `${base}/settings#ai-keys`,
     },
     {
       key: "hours",

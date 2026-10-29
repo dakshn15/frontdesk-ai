@@ -54,11 +54,11 @@ SEED_OWNER_PASSWORD=<a local password> npm run db:reset:seed   # wipe the local 
 
 It reads the database and Supabase settings from `.env.local`, prints what it will delete before deleting it, and runs the delete and the seed in one transaction. It asks for `--yes` before touching a database that isn't local, or a workspace owned by someone other than the seed owner.
 
-To seed production, sign up in the live app with the account that should own the sample workspace (the seeder only creates users locally), then put the production `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and `NEXT_PUBLIC_SITE_URL` in a git-ignored file such as `.env.production.local`, and run:
+To seed production, sign up in the live app with the account that should own the sample workspace (the seeder only creates users locally), then put the production `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and `NEXT_PUBLIC_SITE_URL` in a git-ignored file such as `.env.live`, and run. Don't name it `.env.production.local`: Next.js loads that file in every local production build, which would point the local app at the live database. With `AI_KEYS_SECRET` and an AI key in the file too, the seeder saves that key as the sample workspace's own, so its receptionist answers.
 
 ```bash
-SEED_OWNER_EMAIL=<your account email> npm run db:seed -- --env-file .env.production.local --dry-run
-SEED_OWNER_EMAIL=<your account email> npm run db:seed -- --env-file .env.production.local --yes
+SEED_OWNER_EMAIL=<your account email> npm run db:seed -- --env-file .env.live --dry-run
+SEED_OWNER_EMAIL=<your account email> npm run db:seed -- --env-file .env.live --yes
 ```
 
 ## Tests
@@ -103,8 +103,8 @@ tests/              unit, integration and e2e tests, plus shared test helpers
 3. Import the repository in Vercel and set `DATABASE_URL` (the transaction pooler connection string, port 6543), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL` (the production URL) and `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=false`.
 4. Optional, booking emails: create a Resend account, then set `RESEND_API_KEY` and `EMAIL_FROM` in Vercel. Without them, emails are recorded in the `email_log` table and not sent. Resend's test sender only delivers to your own address; to email customers, verify a domain you own in Resend.
    - For reminders and the daily job (demo clean-up and chat tagging), set `CRON_SECRET` to any random string of 16+ characters; `vercel.json` schedules both.
-   - For knowledge embeddings, set `OPENAI_API_KEY` (set a monthly spend limit in OpenAI first). Without it, knowledge search uses keywords only.
-   - For the receptionist, `OPENAI_API_KEY` (and optionally `GOOGLE_GENERATIVE_AI_API_KEY` as a fallback). Without either, it replies that it can't answer right now.
+   - Knowledge embeddings use the workspace's own OpenAI key. Without one, knowledge search uses keywords only.
+   - For the receptionist: each workspace pastes its own OpenAI or Google Gemini key in Settings → AI keys, stored encrypted with `AI_KEYS_SECRET` (any random string of 32+ characters; never change it once keys are saved, or they can't be read). `OPENAI_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY` are the platform's own keys, used only by live demo copies. A workspace without a key gets a reply that the receptionist can't answer right now.
    - For the live demo, turn on "Allow anonymous sign-ins" in Supabase (Authentication → Sign In / Providers). To stop bots, create a Cloudflare Turnstile widget for your domain, turn on captcha in Supabase (Authentication → Attack Protection) with its secret key, and set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in Vercel. `CRON_SECRET` also runs the daily demo clean-up.
 5. Optional, billing: in Stripe test mode, create Starter and Pro monthly prices and a webhook endpoint at `<vercel url>/api/webhooks/stripe` for `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`, then set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_STARTER` and `STRIPE_PRICE_PRO` in Vercel.
 6. Optional, platform admin: set `PLATFORM_ADMIN_EMAILS` to a comma-separated list of the emails that may open `/admin`.

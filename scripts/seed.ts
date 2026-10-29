@@ -101,6 +101,12 @@ async function main() {
     plan.push(
       `Seed Bloom Hair & Beauty at ${slug}, owned by ${email}, with no demo expiry, on Pro (active, ${seeder.SHOWCASE_CUSTOMER_ID}).`,
     );
+    const keys = seeder.showcaseKeys();
+    plan.push(
+      keys.length
+        ? `Save its own AI keys from ${keys.map((k) => k.from).join(" and ")}.`
+        : "Save no AI keys (set AI_KEYS_SECRET and an AI key to give it some).",
+    );
     console.log("\nThis will:");
     for (const step of plan) console.log(`  - ${step}`);
 
@@ -121,6 +127,7 @@ async function main() {
       const ownerId = userId ?? (await seeder.createOwner(email, password!));
       const started = Date.now();
       const result = await seeder.resetShowcase(slug, ownerId);
+      await seeder.giveShowcaseKeys(result.id);
       const seeded = await seeder.findWorkspace(result.slug);
       console.log(
         `\n✓ Seeded ${result.slug} in ${((Date.now() - started) / 1000).toFixed(1)}s: ` +

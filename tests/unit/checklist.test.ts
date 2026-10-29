@@ -9,15 +9,22 @@ describe("setupChecklist", () => {
       bookableStaff: 0,
       policies: 1,
       answers: 0,
+      aiKey: true,
     });
-    expect(list.doneCount).toBe(4);
-    expect(list.total).toBe(6);
+    expect(list.doneCount).toBe(5);
+    expect(list.total).toBe(7);
     expect(list.steps).toEqual([
       {
         key: "details",
         label: "Business details",
         done: true,
         href: "/w/bloom/settings",
+      },
+      {
+        key: "ai",
+        label: "AI key",
+        done: true,
+        href: "/w/bloom/settings#ai-keys",
       },
       {
         key: "hours",
@@ -59,6 +66,7 @@ describe("setupChecklist", () => {
       bookableStaff: 0,
       policies: 0,
       answers: 0,
+      aiKey: false,
     });
     expect(list.doneCount).toBe(1);
   });
@@ -70,8 +78,9 @@ describe("setupChecklist", () => {
       bookableStaff: 1,
       policies: 1,
       answers: 1,
+      aiKey: true,
     });
-    expect(list.doneCount).toBe(6);
+    expect(list.doneCount).toBe(7);
     expect(list.steps.every((step) => step.done)).toBe(true);
   });
 });

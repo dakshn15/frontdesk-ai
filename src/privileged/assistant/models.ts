@@ -5,6 +5,7 @@ import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { getServerEnv } from "@/env/server";
 import { fakeModel } from "@/features/assistant/fake-model";
 import { withFallback } from "@/features/assistant/fallback";
+import type { AiKeys } from "../ai-keys";
 
 export type ModelChoice = {
   model: LanguageModelV4;
@@ -26,6 +27,7 @@ export const MODEL_IDS = {
  */
 export function chooseModel(
   preferred: "openai" | "google",
+  keys: AiKeys,
 ): ModelChoice | null {
   const env = getServerEnv();
   let fallbackHandler: (provider: string, modelId: string) => void = () => {};
@@ -43,13 +45,11 @@ export function chooseModel(
   }
 
   const available = {
-    openai: env.OPENAI_API_KEY
-      ? createOpenAI({ apiKey: env.OPENAI_API_KEY })(MODEL_IDS.openai)
+    openai: keys.openai
+      ? createOpenAI({ apiKey: keys.openai })(MODEL_IDS.openai)
       : null,
-    google: env.GOOGLE_GENERATIVE_AI_API_KEY
-      ? createGoogleGenerativeAI({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY })(
-          MODEL_IDS.google,
-        )
+    google: keys.google
+      ? createGoogleGenerativeAI({ apiKey: keys.google })(MODEL_IDS.google)
       : null,
   };
   const order =
@@ -75,21 +75,18 @@ export function chooseModel(
 }
 
 /** Whether the receptionist can answer at all (a key is set, or the scripted test model). */
-export function assistantReady(): boolean {
-  return chooseModel("openai") !== null;
+export function assistantReady(keys: AiKeys): boolean {
+  return chooseModel("openai", keys) !== null;
 }
 
 /**
  * The model that grades test answers by meaning, or null without a real key. The scripted
  * test model can't judge meaning, so it never grades.
  */
-export function chooseGrader(): LanguageModelV4 | null {
-  const env = getServerEnv();
-  if (env.OPENAI_API_KEY)
-    return createOpenAI({ apiKey: env.OPENAI_API_KEY })(MODEL_IDS.openai);
-  if (env.GOOGLE_GENERATIVE_AI_API_KEY)
-    return createGoogleGenerativeAI({
-      apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
-    })(MODEL_IDS.google);
+export function chooseGrader(keys: AiKeys): LanguageModelV4 | null {
+  if (keys.openai)
+    return createOpenAI({ apiKey: keys.openai })(MODEL_IDS.openai);
+  if (keys.google)
+    return createGoogleGenerativeAI({ apiKey: keys.google })(MODEL_IDS.google);
   return null;
 }

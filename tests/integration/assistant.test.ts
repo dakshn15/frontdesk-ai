@@ -224,28 +224,21 @@ describe("runAgent", () => {
     ]);
   });
 
-  it.skipIf(
-    Boolean(
-      process.env.OPENAI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    ),
-  )(
-    "without an AI key, replies that it can't answer and saves that",
-    async () => {
-      const { ws, conversationId } = await workspace();
-      const run = await runAgent({
-        workspaceId: ws.id,
-        conversationId,
-        mode: "live",
-        text: "Hi",
-      });
-      expect(run.fixedReply).toBe(UNAVAILABLE_REPLY);
-      const roles = await adminDb
-        .select({ role: messages.role })
-        .from(messages)
-        .where(eq(messages.conversationId, conversationId));
-      expect(roles.map((r) => r.role).sort()).toEqual(["ai", "visitor"]);
-    },
-  );
+  it("without an AI key, replies that it can't answer and saves that", async () => {
+    const { ws, conversationId } = await workspace();
+    const run = await runAgent({
+      workspaceId: ws.id,
+      conversationId,
+      mode: "live",
+      text: "Hi",
+    });
+    expect(run.fixedReply).toBe(UNAVAILABLE_REPLY);
+    const roles = await adminDb
+      .select({ role: messages.role })
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId));
+    expect(roles.map((r) => r.role).sort()).toEqual(["ai", "visitor"]);
+  });
 
   it("stays quiet once a person has taken over", async () => {
     const { ws, conversationId } = await workspace();

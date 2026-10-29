@@ -15,9 +15,6 @@ import {
 
 afterAll(cleanupTestData);
 
-const noKeys =
-  !process.env.OPENAI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-
 function post(body: unknown, ip = crypto.randomUUID()) {
   return new Request("http://localhost/api/chat", {
     method: "POST",
@@ -51,30 +48,28 @@ describe("chat API", () => {
     ).toBe(400);
   });
 
-  it.skipIf(!noKeys)(
-    "streams a reply and keeps the conversation going",
-    async () => {
-      const { token } = await startSession();
-      const first = await handleChat(post({ token, text: "Hi" }));
-      expect(first.status).toBe(200);
-      const conversationId = first.headers.get("x-conversation-id");
-      expect(conversationId).toBeTruthy();
-      const stream = await first.text();
-      expect(stream).toContain("can't answer right now");
-      expect(stream).toContain(conversationId);
+  // Test workspaces have no AI key of their own, so the reply is the fixed one.
+  it("streams a reply and keeps the conversation going", async () => {
+    const { token } = await startSession();
+    const first = await handleChat(post({ token, text: "Hi" }));
+    expect(first.status).toBe(200);
+    const conversationId = first.headers.get("x-conversation-id");
+    expect(conversationId).toBeTruthy();
+    const stream = await first.text();
+    expect(stream).toContain("can't answer right now");
+    expect(stream).toContain(conversationId);
 
-      const second = await handleChat(
-        post({ token, conversationId, text: "Still there?" }),
-      );
-      expect(second.headers.get("x-conversation-id")).toBe(conversationId);
-      await second.text();
-      const saved = await adminDb
-        .select({ role: messages.role })
-        .from(messages)
-        .where(eq(messages.conversationId, conversationId!));
-      expect(saved).toHaveLength(4);
-    },
-  );
+    const second = await handleChat(
+      post({ token, conversationId, text: "Still there?" }),
+    );
+    expect(second.headers.get("x-conversation-id")).toBe(conversationId);
+    await second.text();
+    const saved = await adminDb
+      .select({ role: messages.role })
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId!));
+    expect(saved).toHaveLength(4);
+  });
 
   it("limits how many messages a session can send", async () => {
     const { token } = await startSession();

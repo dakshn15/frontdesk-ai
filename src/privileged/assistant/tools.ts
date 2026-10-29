@@ -21,6 +21,7 @@ import { findSlots } from "@/features/bookings/engine";
 import { formatAppointment } from "@/features/bookings/format";
 import { rowsToWeek, WEEKDAYS } from "@/features/hours/weekly-hours";
 import { embedQuery } from "@/features/knowledge/embeddings";
+import { aiKeysFor } from "../ai-keys";
 import { searchKnowledge } from "@/features/knowledge/search";
 import { addDays, formatClock, localDate } from "@/lib/clock";
 import { formatDuration } from "@/lib/duration";
@@ -286,7 +287,10 @@ export function buildTools(ctx: ToolContext, sources: Map<string, Source>) {
       execute: recorded(
         "search_knowledge",
         async ({ query }: { query: string }) => {
-          const queryEmbedding = await embedQuery(query);
+          const queryEmbedding = await embedQuery(
+            query,
+            (await aiKeysFor(ws)).openai,
+          );
           const passages = await adminDb.transaction((tx) =>
             searchKnowledge(tx, ws, query, { queryEmbedding, limit: 5 }),
           );
