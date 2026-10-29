@@ -59,7 +59,7 @@ export default async function CalendarPage({
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
             Calendar
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

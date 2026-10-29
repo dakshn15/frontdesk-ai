@@ -39,7 +39,7 @@ export default async function ServicesPage({
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 md:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
           Services
         </h1>
         <ServiceDialog {...dialogProps} />

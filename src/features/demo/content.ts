@@ -534,3 +534,82 @@ export const DEMO_TESTS: {
     mustPass: false,
   },
 ];
+
+/** The salon website's story section, in the owner's words. */
+export const DEMO_STORY = {
+  paragraphs: [
+    "Maya opened Bloom in 2016 in a narrow shop on South Congress, between a coffee shop and a bookstore. The chairs came from an East Austin barbershop that was closing down, and they're still here.",
+    "We're still a team of four. We book fewer appointments than most salons so nobody is rushed, and we'll tell you honestly what your hair will and won't do before we start.",
+    "Foils, colour tubes and cut hair go to a salon recycling programme instead of the bin.",
+  ],
+  quote:
+    "A good haircut should look better three weeks later than it does when you leave the chair.",
+  quoteBy: "Maya, owner",
+} as const;
+
+/** Reviews on the demo salon's website. Made up, like the salon. */
+export const DEMO_REVIEWS = [
+  {
+    quote:
+      "Jordan fixed a box-dye mistake I'd been hiding under hats for a month. It took two visits, and I was told that before we started.",
+    name: "Rachel G.",
+    visit: "Colour correction with Jordan",
+  },
+  {
+    quote:
+      "Priya cut my curls dry, one at a time. It's the first cut in years that grows out well.",
+    name: "Tasha M.",
+    visit: "Curly cut with Priya",
+  },
+  {
+    quote:
+      "Maya and Sofia did hair and makeup for six of us on the morning of my wedding. Everyone was ready forty minutes early.",
+    name: "Lauren B.",
+    visit: "Bridal party",
+  },
+  {
+    quote:
+      "I come in for a gloss every couple of months. They're never running late, and the parking out back is a gift on South Congress.",
+    name: "Ben O.",
+    visit: "Gloss and tone",
+  },
+] as const;
+
+/** Shades for the website's look book, from roots to ends. */
+export const DEMO_LOOKS = [
+  {
+    name: "Honey",
+    visit: "Balayage with Jordan",
+    stops: ["#3B2417", "#6E4526", "#B98245", "#E3BC7E"],
+  },
+  {
+    name: "Copper penny",
+    visit: "Full colour",
+    stops: ["#4A1C0C", "#8C3B1C", "#C8692F", "#E39C62"],
+  },
+  {
+    name: "Mushroom bronde",
+    visit: "Balayage and gloss",
+    stops: ["#2F2520", "#5E4E44", "#9A8676", "#CDBBA8"],
+  },
+  {
+    name: "Rose gold",
+    visit: "Gloss and tone",
+    stops: ["#5A2E30", "#A8605E", "#DE9F96", "#F2CBC1"],
+  },
+  {
+    name: "Espresso",
+    visit: "Gloss and tone",
+    stops: ["#150D0A", "#2A1A13", "#462C20", "#6A4533"],
+  },
+  {
+    name: "Icy platinum",
+    visit: "Full colour",
+    stops: ["#7D7873", "#BDB6AE", "#E3DED6", "#F7F4EF"],
+  },
+  {
+    name: "Black cherry",
+    visit: "Full colour",
+    stops: ["#1A090D", "#3A101D", "#651D31", "#8C2E45"],
+  },
+] as const;

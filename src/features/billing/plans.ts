@@ -1,4 +1,4 @@
-// The plans and what each allows. Prices are placeholders for the demo (Stripe test mode);
+// The plans and what each allows. The prices shown here are for display;
 // the amount charged comes from the Stripe price itself.
 
 export type PlanId = "trial" | "starter" | "pro" | "demo";

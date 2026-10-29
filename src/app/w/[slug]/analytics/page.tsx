@@ -121,7 +121,7 @@ export default async function AnalyticsPage({
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
             Analytics
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">

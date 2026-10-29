@@ -42,7 +42,7 @@ export default async function TestsPage({
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 md:py-10">
       <RefreshWhileRunning running={running} />
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
         Test lab
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -87,7 +87,10 @@ export default async function TestsPage({
                   <ul className="mt-1.5 flex flex-wrap gap-1">
                     {describeChecks(test.checks).map((check) => (
                       <li key={check}>
-                        <Badge variant="outline" className="font-normal">
+                        <Badge
+                          variant="outline"
+                          className="h-auto font-normal whitespace-normal"
+                        >
                           {check}
                         </Badge>
                       </li>

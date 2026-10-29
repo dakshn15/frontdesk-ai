@@ -36,7 +36,7 @@ export default async function RunPage({
         <ArrowLeft className="size-4" />
         Tests
       </Link>
-      <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h1 className="mt-4 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
         {running
           ? `Running ${results.length + 1} of ${run.total}…`
           : run.status === "failed"

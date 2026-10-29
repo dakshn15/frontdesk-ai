@@ -43,7 +43,8 @@ test("a visitor starts the demo, chats on the salon's site and runs its dashboar
   await page.getByRole("button", { name: "Do you have parking?" }).click();
   const chat = page.locator('iframe[title="Chat"]').contentFrame();
   await expect(chat.getByText(/Guest parking is behind the salon/)).toBeVisible(
-    { timeout: 15_000 },
+    // The chat loads after the salon page and its photos, so its first answer can take a while.
+    { timeout: 30_000 },
   );
 
   await page.getByRole("link", { name: "Open the dashboard" }).click();

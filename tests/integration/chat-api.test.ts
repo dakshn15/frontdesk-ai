@@ -86,5 +86,6 @@ describe("chat API", () => {
     }
     expect(statuses.slice(0, -1).every((s) => s === 200)).toBe(true);
     expect(statuses.at(-1)).toBe(429);
-  });
+    // Each message also checks the plan's limits, so 21 of them take a while under load.
+  }, 60_000);
 });

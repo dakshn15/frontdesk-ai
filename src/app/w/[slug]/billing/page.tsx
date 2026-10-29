@@ -70,12 +70,12 @@ export default async function BillingPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 md:py-10">
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
         Billing
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Your plan and what you&apos;ve used this month. Prices are placeholders:
-        payments run in Stripe&apos;s test mode.
+        Your plan and what you&apos;ve used this month. Payments are handled
+        securely by Stripe.
       </p>
 
       <div className="mt-6 grid gap-3">

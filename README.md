@@ -1,6 +1,6 @@
 # FrontDesk AI
 
-An AI receptionist for service businesses like salons and spas. It answers customers from the business's own data, books appointments into a real calendar, captures leads, and hands the chat to a person when it isn't sure. Built to show production-grade work: multi-tenant data protected by Postgres row level security, tested end to end, and deployed.
+An AI receptionist for service businesses like salons and spas. It answers customers from the business's own data, books appointments into a real calendar, captures leads, and hands the chat to a person when it isn't sure. Multi-tenant, with every business's data protected by Postgres row level security, and tested end to end.
 
 [![CI](https://github.com/dakshn15/frontdesk-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/dakshn15/frontdesk-ai/actions/workflows/ci.yml) [![Evaluation](https://github.com/dakshn15/frontdesk-ai/actions/workflows/eval.yml/badge.svg)](https://github.com/dakshn15/frontdesk-ai/actions/workflows/eval.yml)
 
@@ -14,14 +14,12 @@ An AI receptionist for service businesses like salons and spas. It answers custo
 - **A live inbox.** Chats update in real time (Supabase Realtime under row level security). Staff take a chat over from the AI, reply in the visitor's chat or by email, hand it back or resolve it. Owners get an email when a visitor asks for a person; if nobody picks it up in 5 minutes, or the business is closed, the visitor is asked for their email.
 - **A test lab.** A playground shows how each answer was made: tools used, passages found, the verified answer, model, tokens, cost and time, with "Fix this answer". Saved tests use simple checks (must use a tool, must or must not mention something, must say it isn't sure, must hand off) or an AI grader, and run in one click. Questions it struggled with in real chats are listed for review.
 - **Analytics.** Conversations, bookings made by the AI, leads, handoff rate, chats resolved without a person, top topics and outcomes (tagged when a chat goes quiet), and AI cost per day by provider.
-- **Billing.** A 14-day trial, then Starter or Pro through Stripe Checkout (test mode, placeholder prices) and the Customer Portal. Plans limit monthly chats, knowledge sources and team seats; at a limit the widget offers the contact form instead of AI replies.
+- **Billing.** A 14-day trial, then Starter or Pro through Stripe Checkout and the Customer Portal. Plans limit monthly chats, knowledge sources and team seats; at a limit the widget offers the contact form instead of AI replies.
 - **Teams and a platform admin.** Owners, admins and staff with invites; a read-only admin page lists every workspace with its plan, usage and AI cost.
 
 ## Built with
 
 Next.js 16 (App Router, server actions, Turbopack), React 19, TypeScript, Tailwind CSS 4 and shadcn/ui · Supabase (Postgres, Auth, Realtime) with Drizzle ORM and SQL migrations · AI SDK 7 with OpenAI (gpt-5.4-mini) and Google Gemini as fallback, tool calling and streaming · pgvector · Stripe (REST, signed and idempotent webhooks) · Resend · Recharts · Vitest and Playwright · GitHub Actions · Vercel.
-
-Every milestone has a plan and a decisions log in [docs/superpowers/plans](docs/superpowers/plans), including what each call costs if it turns out wrong. The original design is [the spec](docs/superpowers/specs/2026-10-24-frontdesk-ai-design.md).
 
 ## Run it locally
 
@@ -35,6 +33,33 @@ npm run dev          # http://localhost:3300
 ```
 
 Sign-up and password-reset emails land in the local mail catcher at http://127.0.0.1:54324.
+
+### Sample data
+
+`npm run db:seed` deletes the sample workspace and recreates it as a full copy of the demo salon (Bloom Hair & Beauty): services, staff, hours, policies, answers, knowledge, bookings, chats, a month of analytics history and Test lab tests. It has no demo expiry and an active Pro subscription (customer `cus_showcase_seed`, not a real Stripe customer), so the receptionist keeps answering after the trial. Run it again any time to undo manual edits.
+
+```bash
+SEED_OWNER_PASSWORD=<a local password> npm run db:seed   # first run: creates demo@frontdesk.test
+npm run db:seed                                          # later runs: the owner exists, no password needed
+npm run db:seed -- --dry-run                             # say what it would delete and create, change nothing
+SEED_OWNER_PASSWORD=<a local password> npm run db:reset:seed   # wipe the local database, then seed
+```
+
+| Setting               | Flag         | Default                                                    |
+| --------------------- | ------------ | ---------------------------------------------------------- |
+| `SEED_WORKSPACE_SLUG` | `--slug`     | `bloom-hair-beauty`                                        |
+| `SEED_OWNER_EMAIL`    | `--email`    | `demo@frontdesk.test` (local only)                         |
+| `SEED_OWNER_PASSWORD` | `--password` | none; only used to create a new local owner, never printed |
+|                       | `--env-file` | `.env.local` (variables already in the shell win)          |
+
+It reads the database and Supabase settings from `.env.local`, prints what it will delete before deleting it, and runs the delete and the seed in one transaction. It asks for `--yes` before touching a database that isn't local, or a workspace owned by someone other than the seed owner.
+
+To seed production, sign up in the live app with the account that should own the sample workspace (the seeder only creates users locally), then put the production `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and `NEXT_PUBLIC_SITE_URL` in a git-ignored file such as `.env.production.local`, and run:
+
+```bash
+SEED_OWNER_EMAIL=<your account email> npm run db:seed -- --env-file .env.production.local --dry-run
+SEED_OWNER_EMAIL=<your account email> npm run db:seed -- --env-file .env.production.local --yes
+```
 
 ## Tests
 

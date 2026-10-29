@@ -39,7 +39,7 @@ export default async function DemoPage() {
           Run the front desk of a real-looking salon.
         </h1>
         <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-muted-foreground sm:text-lg">
-          You get your own private copy of Bloom Hair & Beauty, a made-up salon
+          You get your own private copy of Bloom Hair & Beauty, a sample salon
           in Austin, with its website, receptionist and dashboard already full
           of bookings and chats. No sign-up. It&apos;s deleted after 24 hours.
         </p>

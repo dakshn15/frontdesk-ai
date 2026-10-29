@@ -1,5 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { adminDb } from "@/db/admin";
 import {
   bookingEvents,
@@ -19,6 +20,7 @@ import {
   staff,
   staffHours,
   staffServices,
+  subscriptions,
   testCases,
   toolCalls,
   verifiedAnswers,
@@ -211,17 +213,26 @@ async function seedConversations(
   }
 }
 
+export type SeedOptions = {
+  /** A fixed slug. A workspace that already has it is deleted first, in the same transaction. */
+  slug?: string;
+  /** A subscription row, so the copy stays live after the trial (the showcase seeder). */
+  subscription?: Omit<typeof subscriptions.$inferInsert, "workspaceId">;
+};
+
 /**
- * A fresh copy of Bloom Hair & Beauty owned by `userId`, deleted after `expiresAt`.
- * Everything is scoped to the new workspace and written in one transaction.
+ * A fresh copy of Bloom Hair & Beauty owned by `userId`, deleted after `expiresAt` (kept
+ * when it's null). Everything is scoped to the new workspace and written in one transaction.
  */
 export async function seedDemoWorkspace(
   userId: string,
-  expiresAt: Date,
+  expiresAt: Date | null,
   now = new Date(),
+  opts: SeedOptions = {},
 ): Promise<{ id: string; slug: string }> {
-  const slug = `bloom-${randomBytes(5).toString("hex")}`;
+  const slug = opts.slug ?? `bloom-${randomBytes(5).toString("hex")}`;
   return adminDb.transaction(async (tx) => {
+    if (opts.slug) await tx.delete(workspaces).where(eq(workspaces.slug, slug));
     const [workspace] = await tx
       .insert(workspaces)
       .values({
@@ -239,6 +250,11 @@ export async function seedDemoWorkspace(
       .returning({ id: workspaces.id });
     const workspaceId = workspace.id;
     await tx.insert(memberships).values({ workspaceId, userId, role: "owner" });
+    if (opts.subscription) {
+      await tx
+        .insert(subscriptions)
+        .values({ workspaceId, ...opts.subscription });
+    }
 
     const serviceIds = (
       await tx

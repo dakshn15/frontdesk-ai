@@ -87,6 +87,56 @@ test("the platform admin page is for platform admins only", async ({
   expect(await accessibilityProblems(page)).toEqual([]);
 });
 
+test("no page scrolls sideways on a phone", async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.setViewportSize({ width: 360, height: 780 });
+  const wide: string[] = [];
+  const check = async (path: string) => {
+    await page.goto(path);
+    await page.waitForLoadState("load");
+    const overflow = await page.evaluate(() => {
+      const width = document.documentElement.clientWidth;
+      // The page itself, and the first few elements that stick out past the edge.
+      const offenders = [...document.querySelectorAll("body *")]
+        .filter((element) => element.getBoundingClientRect().right > width + 1)
+        .filter((element) => getComputedStyle(element).position !== "fixed")
+        .slice(0, 3)
+        .map((element) => element.outerHTML.slice(0, 100));
+      return document.documentElement.scrollWidth > width ? offenders : [];
+    });
+    if (overflow.length) wide.push(`${path}: ${overflow.join(" | ")}`);
+  };
+  for (const path of ["/", "/sign-in", "/sign-up", "/demo"]) await check(path);
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Start the demo" }).click();
+  await expect(page).toHaveURL(/\/demo\/bloom-/, { timeout: 30_000 });
+  const slug = new URL(page.url()).pathname.split("/").at(-1)!;
+  slugs.push(slug);
+  for (const path of [
+    `/demo/${slug}`,
+    `/widget/${slug}`,
+    `/w/${slug}`,
+    `/w/${slug}/calendar`,
+    `/w/${slug}/inbox`,
+    `/w/${slug}/analytics`,
+    `/w/${slug}/services`,
+    `/w/${slug}/staff`,
+    `/w/${slug}/hours`,
+    `/w/${slug}/policies`,
+    `/w/${slug}/answers`,
+    `/w/${slug}/knowledge`,
+    `/w/${slug}/assistant`,
+    `/w/${slug}/assistant/tests`,
+    `/w/${slug}/widget`,
+    `/w/${slug}/emails`,
+    `/w/${slug}/team`,
+    `/w/${slug}/billing`,
+    `/w/${slug}/settings`,
+  ])
+    await check(path);
+  expect(wide).toEqual([]);
+});
+
 test("the main pages have no serious accessibility problems", async ({
   page,
 }) => {

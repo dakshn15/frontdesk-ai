@@ -1,0 +1,6 @@
+/* The demo salon's arched window shape, used for the hero photo and the team portraits.
+   Plain CSS (the app treats every .css file as global), so every class starts with bloom-. */
+
+.bloom-arch {
+  border-radius: 999px 999px 1.25rem 1.25rem;
+}

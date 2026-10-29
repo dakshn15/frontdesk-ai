@@ -39,7 +39,7 @@ export default async function AdminPage() {
         </Link>
         <Badge variant="secondary">Read-only</Badge>
       </header>
-      <h1 className="mt-8 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h1 className="mt-8 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
         Platform admin
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
