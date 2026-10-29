@@ -33,6 +33,7 @@ describe("getSetupFacts", () => {
       bookableStaff: 0,
       policies: 0,
       answers: 0,
+      aiKey: false,
     });
   });
 
@@ -92,6 +93,7 @@ describe("getSetupFacts", () => {
       bookableStaff: 1,
       policies: 1,
       answers: 1,
+      aiKey: false,
     });
   });
 });
